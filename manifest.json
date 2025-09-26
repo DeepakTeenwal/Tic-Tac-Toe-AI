@@ -9,5 +9,7 @@
             "type": "caster",
             "fid": "18301"
         }
-    ]
+    ],
+    "splashImage": "https://tic-tac-toe-4x4-five.vercel.app/splash.png",
+    "splashBackgroundColor": "#4a6fa5"
 }
