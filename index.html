@@ -17,14 +17,12 @@
             --warning: #ffc107;
             --cell-size: 80px;
         }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
         body {
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
@@ -34,7 +32,6 @@
             justify-content: center;
             padding: 20px;
         }
-
         .container {
             background-color: white;
             border-radius: 15px;
@@ -43,7 +40,6 @@
             width: 100%;
             max-width: 800px;
         }
-
         h1 {
             color: var(--primary);
             text-align: center;
@@ -52,7 +48,6 @@
             font-weight: 700;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
-
         .game-controls {
             display: flex;
             justify-content: center;
@@ -60,7 +55,6 @@
             margin-bottom: 30px;
             flex-wrap: wrap;
         }
-
         .btn {
             padding: 10px 20px;
             border: none;
@@ -70,37 +64,30 @@
             transition: all 0.3s ease;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-
         .btn-primary {
             background-color: var(--primary);
             color: white;
         }
-
         .btn-secondary {
             background-color: var(--secondary);
             color: white;
         }
-
         .btn-success {
             background-color: var(--success);
             color: white;
         }
-
         .btn-warning {
             background-color: var(--warning);
             color: var(--dark);
         }
-
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
         }
-
         .btn:active {
             transform: translateY(0);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-
         .status {
             text-align: center;
             margin-bottom: 20px;
@@ -109,7 +96,6 @@
             color: var(--dark);
             min-height: 40px;
         }
-
         .board {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -121,7 +107,6 @@
             border-radius: 10px;
             box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
         }
-
         .cell {
             width: var(--cell-size);
             height: var(--cell-size);
@@ -138,45 +123,37 @@
             position: relative;
             overflow: hidden;
         }
-
         .cell:hover {
             transform: scale(1.05);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             background-color: #f0f8ff;
         }
-
         .cell.x {
             color: var(--danger);
         }
-
         .cell.o {
             color: var(--success);
         }
-
         .cell.x::before, .cell.x::after,
         .cell.o::before {
             content: '';
             position: absolute;
         }
-
         .cell.x::before, .cell.x::after {
             width: 70%;
             height: 6px;
             background-color: var(--danger);
             transform: rotate(45deg);
         }
-
         .cell.x::after {
             transform: rotate(-45deg);
         }
-
         .cell.o::before {
             width: 60%;
             height: 60%;
             border-radius: 50%;
             border: 6px solid var(--success);
         }
-
         .scoreboard {
             display: flex;
             justify-content: space-around;
@@ -184,7 +161,6 @@
             flex-wrap: wrap;
             gap: 20px;
         }
-
         .score {
             background-color: var(--light);
             padding: 15px 25px;
@@ -193,31 +169,26 @@
             text-align: center;
             min-width: 150px;
         }
-
         .score-title {
             font-size: 1rem;
             font-weight: 600;
             color: var(--dark);
             margin-bottom: 5px;
         }
-
         .score-value {
             font-size: 1.8rem;
             font-weight: 700;
             color: var(--primary);
         }
-
         .winning-cell {
             animation: pulse 1s infinite;
             background-color: rgba(79, 195, 220, 0.2);
         }
-
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
-
         .confetti {
             position: absolute;
             width: 10px;
@@ -227,35 +198,28 @@
             pointer-events: none;
             z-index: 1000;
         }
-
         @media (max-width: 768px) {
             :root {
                 --cell-size: 60px;
             }
-
             h1 {
                 font-size: 2rem;
             }
-
             .container {
                 padding: 20px;
             }
-
             .game-controls {
                 flex-direction: column;
                 align-items: center;
             }
-
             .score {
                 min-width: 120px;
             }
         }
-
         @media (max-width: 480px) {
             :root {
                 --cell-size: 50px;
             }
-
             .cell {
                 font-size: 2rem;
             }
@@ -265,8 +229,11 @@
 <body>
     <div class="container">
         <h1>tic-tac-toe-4x4</h1>
-        
+       
         <div class="game-controls">
+            <button id="connect-btn" class="btn btn-primary">
+                <i class="fas fa-wallet"></i> Connect Wallet
+            </button>
             <button id="reset-btn" class="btn btn-warning">
                 <i class="fas fa-sync-alt"></i> New Game
             </button>
@@ -274,11 +241,11 @@
                 <i class="fas fa-trophy"></i> Reset Scores
             </button>
         </div>
-        
+       
         <div class="status" id="status">Your turn (X)</div>
-        
+       
         <div class="board" id="board"></div>
-        
+       
         <div class="scoreboard">
             <div class="score">
                 <div class="score-title">You (X)</div>
@@ -295,8 +262,15 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    <!-- Load SDK and Ethers via CDN -->
+    <script type="module">
+        import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
+        import { ethers } from 'https://esm.sh/ethers@6';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize Farcaster Mini App SDK
+            await sdk.actions.ready();
+
             const boardElement = document.getElementById('board');
             const statusElement = document.getElementById('status');
             const xScoreElement = document.getElementById('x-score');
@@ -304,6 +278,7 @@
             const drawScoreElement = document.getElementById('draw-score');
             const resetBtn = document.getElementById('reset-btn');
             const resetScoreBtn = document.getElementById('reset-score-btn');
+            const connectBtn = document.getElementById('connect-btn');
 
             // Game state
             let board = Array(16).fill(null);
@@ -315,6 +290,103 @@
                 draw: 0
             };
 
+            // Wallet state
+            let provider = null;
+            let signer = null;
+            let userAddress = null;
+            let prizeAmount = null;
+            let claimButton = null;
+
+            // Constants
+            const TOKEN_ADDRESS = '0x9cb41fd9dc6891bae8187029461bfaadf6cc0c69'; // NOICE token
+            const CLAIM_CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000'; // REPLACE WITH DEPLOYED CLAIM CONTRACT ADDRESS
+            const CLAIM_ABI = [
+                {
+                    "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
+                    "name": "claim",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                }
+            ];
+            const BASE_CHAIN_ID = '0x2105'; // Base chain ID
+
+            // Connect wallet function
+            async function connectWallet() {
+                try {
+                    provider = sdk.wallet.getEthereumProvider();
+
+                    // Switch to Base chain
+                    try {
+                        await provider.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: BASE_CHAIN_ID }],
+                        });
+                    } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            // Chain not added, add Base
+                            await provider.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: BASE_CHAIN_ID,
+                                    chainName: 'Base',
+                                    rpcUrls: ['https://mainnet.base.org'],
+                                    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+                                    blockExplorerUrls: ['https://basescan.org']
+                                }],
+                            });
+                        } else {
+                            throw switchError;
+                        }
+                    }
+
+                    // Request accounts
+                    const accounts = await provider.request({ method: 'eth_requestAccounts' });
+                    userAddress = accounts[0];
+
+                    // Update UI
+                    connectBtn.innerHTML = `<i class="fas fa-wallet"></i> Connected: ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+                    connectBtn.disabled = true;
+
+                    // Get signer
+                    const web3Provider = new ethers.BrowserProvider(provider);
+                    signer = await web3Provider.getSigner();
+
+                    statusElement.textContent += ' | Wallet connected';
+                } catch (error) {
+                    console.error('Connection failed:', error);
+                    statusElement.textContent += ' | Wallet connection failed';
+                }
+            }
+
+            // Claim prize function
+            async function claimPrize() {
+                if (!userAddress) {
+                    await connectWallet();
+                    if (!userAddress) return;
+                }
+
+                if (!prizeAmount) {
+                    statusElement.textContent += ' | No prize available';
+                    return;
+                }
+
+                try {
+                    const contract = new ethers.Contract(CLAIM_CONTRACT_ADDRESS, CLAIM_ABI, signer);
+                    const amountWei = ethers.parseUnits(prizeAmount.toString(), 18); // Assuming 18 decimals for NOICE
+
+                    statusElement.textContent = `Claiming ${prizeAmount} NOICE...`;
+                    const tx = await contract.claim(amountWei);
+                    await tx.wait();
+
+                    statusElement.textContent = `Claim successful! You received ${prizeAmount} NOICE. Tx: ${tx.hash}`;
+                    if (claimButton) claimButton.remove();
+                } catch (error) {
+                    console.error('Claim failed:', error);
+                    statusElement.textContent = `Claim failed: ${error.message}. Ensure the claim contract is deployed and approved.`;
+                }
+            }
+
             // Initialize the board
             function initializeBoard() {
                 boardElement.innerHTML = '';
@@ -322,7 +394,9 @@
                 currentPlayer = 'X';
                 gameActive = true;
                 statusElement.textContent = 'Your turn (X)';
-                
+                if (claimButton) claimButton.remove();
+                prizeAmount = null;
+
                 for (let i = 0; i < 16; i++) {
                     const cell = document.createElement('div');
                     cell.classList.add('cell');
@@ -335,13 +409,12 @@
             // Handle cell click
             function handleCellClick(e) {
                 const index = parseInt(e.target.getAttribute('data-index'));
-                
+               
                 if (board[index] !== null || !gameActive || currentPlayer === 'O') {
                     return;
                 }
-
                 makeMove(index);
-                
+               
                 if (gameActive && currentPlayer === 'O') {
                     setTimeout(computerMove, 800);
                 }
@@ -351,21 +424,33 @@
             function makeMove(index) {
                 board[index] = currentPlayer;
                 const cell = document.querySelector(`.cell[data-index="${index}"]`);
-                
+               
                 if (currentPlayer === 'X') {
                     cell.classList.add('x');
                 } else {
                     cell.classList.add('o');
                 }
 
-                if (checkWinner()) {
+                const winningPattern = checkWinner();
+                if (winningPattern) {
                     const winner = currentPlayer;
                     scores[winner]++;
                     updateScoreboard();
                     gameActive = false;
                     highlightWinningCells();
                     showConfetti();
-                    statusElement.textContent = winner === 'X' ? 'You win!' : 'Computer wins!';
+                    let winMessage = winner === 'X' ? 'You win!' : 'Computer wins!';
+                    if (winner === 'X') {
+                        prizeAmount = Math.floor(Math.random() * 30) + 1;
+                        winMessage += ` Prize: ${prizeAmount} NOICE!`;
+                        // Add claim button
+                        const claimDiv = document.createElement('div');
+                        claimDiv.innerHTML = `<button id="claim-prize-btn" class="btn btn-success" style="margin-top: 10px;"><i class="fas fa-gift"></i> Claim Prize</button>`;
+                        statusElement.appendChild(claimDiv);
+                        claimButton = document.getElementById('claim-prize-btn');
+                        claimButton.addEventListener('click', claimPrize);
+                    }
+                    statusElement.innerHTML = winMessage;
                 } else if (board.every(cell => cell !== null)) {
                     scores.draw++;
                     updateScoreboard();
@@ -380,12 +465,12 @@
             // Computer move
             function computerMove() {
                 if (!gameActive) return;
-                
+               
                 // Simple AI: first try to win, then block player, then random
-                let bestMove = findWinningMove('O') || 
-                               findWinningMove('X') || 
+                let bestMove = findWinningMove('O') ||
+                               findWinningMove('X') ||
                                findRandomMove();
-                
+               
                 makeMove(bestMove);
             }
 
@@ -397,7 +482,7 @@
                         board[i] = player;
                         const hasWon = checkWinner();
                         board[i] = null;
-                        
+                       
                         if (hasWon) {
                             return i;
                         }
@@ -426,7 +511,6 @@
                     // Diagonals
                     [0, 5, 10, 15], [3, 6, 9, 12]
                 ];
-
                 for (const pattern of winPatterns) {
                     const [a, b, c, d] = pattern;
                     if (board[a] && board[a] === board[b] && board[a] === board[c] && board[a] === board[d]) {
@@ -466,7 +550,7 @@
                         confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
                         confetti.style.animation = 'pulse 2s ease-out forwards';
                         document.body.appendChild(confetti);
-                        
+                       
                         setTimeout(() => {
                             confetti.remove();
                         }, 2000);
@@ -475,6 +559,7 @@
             }
 
             // Event listeners
+            connectBtn.addEventListener('click', connectWallet);
             resetBtn.addEventListener('click', initializeBoard);
             resetScoreBtn.addEventListener('click', () => {
                 scores = { X: 0, O: 0, draw: 0 };
