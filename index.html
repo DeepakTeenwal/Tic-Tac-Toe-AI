@@ -106,6 +106,13 @@
         }
         .score-title { font-size: 16px; }
         .score-value { font-size: 24px; font-weight: bold; }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
         .confetti {
             position: fixed;
             width: 10px;
@@ -148,6 +155,10 @@
                 <div class="score-value" id="o-score">0</div>
             </div>
         </div>
+        <div class="stats">
+            <div id="total-tokens">Total NOICE Claimed: 0</div>
+            <div id="user-wins">Your Wins: 0</div>
+        </div>
     </div>
 
     <script type="module">
@@ -156,6 +167,14 @@
         import { farcasterMiniApp } from 'https://esm.sh/@farcaster/miniapp-wagmi-connector';
         import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
         import { ethers } from 'https://esm.sh/ethers@6';
+
+        // Check Node.js version in dev environment
+        if (typeof process !== 'undefined' && process.versions.node) {
+            const nodeVersion = process.versions.node;
+            if (parseFloat(nodeVersion) < 22.11) {
+                console.warn(`Node.js version ${nodeVersion} is not supported. Please use 22.11.0 or higher.`);
+            }
+        }
 
         // Wagmi config for Base
         const config = createConfig({
@@ -183,6 +202,8 @@
             const resetBtn = document.getElementById('reset-btn');
             const resetScoreBtn = document.getElementById('reset-score-btn');
             const connectBtn = document.getElementById('connect-btn');
+            const totalTokensElement = document.getElementById('total-tokens');
+            const userWinsElement = document.getElementById('user-wins');
 
             let board = Array(16).fill(null);
             let currentPlayer = 'X';
@@ -254,10 +275,11 @@
                             functionName: 'totalPrizesClaimed'
                         })
                     ]);
+                    userWinsElement.textContent = `Your Wins: ${wins}`;
+                    totalTokensElement.textContent = `Total NOICE Claimed: ${ethers.formatUnits(totalPrizes, 18)}`;
                     if (wins > 0) {
                         statusElement.textContent += ` | You have ${wins} unclaimed wins!`;
                     }
-                    document.getElementById('total-tokens').textContent = `Total NOICE Claimed: ${ethers.formatUnits(totalPrizes, 18)}`;
                 } catch (error) {
                     console.error('Connection failed:', error);
                     let errorMsg = 'Wallet connection failed: ';
@@ -322,12 +344,21 @@
                     });
                     statusElement.textContent = `Claim successful! You received ${prizeAmount} NOICE. Tx: ${tx}`;
                     if (claimButton) claimButton.remove();
-                    const totalPrizes = await readContract(config, {
-                        address: CLAIM_CONTRACT_ADDRESS,
-                        abi: CLAIM_ABI,
-                        functionName: 'totalPrizesClaimed'
-                    });
-                    document.getElementById('total-tokens').textContent = `Total NOICE Claimed: ${ethers.formatUnits(totalPrizes, 18)}`;
+                    const [wins, totalPrizes] = await Promise.all([
+                        readContract(config, {
+                            address: CLAIM_CONTRACT_ADDRESS,
+                            abi: CLAIM_ABI,
+                            functionName: 'wins',
+                            args: [userAddress]
+                        }),
+                        readContract(config, {
+                            address: CLAIM_CONTRACT_ADDRESS,
+                            abi: CLAIM_ABI,
+                            functionName: 'totalPrizesClaimed'
+                        })
+                    ]);
+                    userWinsElement.textContent = `Your Wins: ${wins}`;
+                    totalTokensElement.textContent = `Total NOICE Claimed: ${ethers.formatUnits(totalPrizes, 18)}`;
                 } catch (error) {
                     console.error('Claim failed:', error);
                     statusElement.textContent = `Claim failed: ${error.message}`;
