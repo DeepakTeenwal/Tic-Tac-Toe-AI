@@ -1,0 +1,13 @@
+{
+  "name": "Tic-Tac-Toe 4x4",
+  "version": "1.0.0",
+  "icon": "https://tic-tac-toe-4x4-sigma.vercel.app/icon.png"
+  "description": "Play Tic-Tac-Toe and win NOICE tokens!"
+  "url": "https://tic-tac-toe-4x4-sigma.vercel.app",
+  "attributions": [
+    {
+      "type": "caster",
+      "fid": "18301" 
+    }
+  ]
+}
