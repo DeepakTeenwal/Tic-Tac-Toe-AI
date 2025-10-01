@@ -162,41 +162,50 @@
       color: #fff;
     }
 
+    .bet-btn {
+      background: var(--win);
+      margin: 1rem auto; /* Ensure button is centered and spaced below restart */
+      width: fit-content;
+    }
+
+    .connect-btn {
+      background: var(--lose);
+      margin: 1rem auto;
+      width: fit-content;
+    }
+
     @media (max-width: 400px) {
       #board {
         grid-template-columns: repeat(3, 80px);
         grid-template-rows: repeat(3, 80px);
       }
-    }
-
-    .bet-btn {
-      background: var(--win);
-      margin-top: 1rem;
-    }
-
-    .hidden {
-      display: none;
+      button, .bet-btn, .connect-btn {
+        padding: .5rem 1.5rem; /* Smaller buttons for mobile */
+        font-size: 0.9rem;
+      }
     }
   </style>
   <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
   <script type="module">
     import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
-    // Wait for DOM, then ready()
+
     window.addEventListener('DOMContentLoaded', async () => {
       // Access user context
       const { user } = await sdk.getContext();
-      console.log(`Welcome, ${user.displayName || user.username}! FID: ${user.fid}`);
-      // Optional: Personalize status
-      if (user.pfpUrl) {
-        // Could load PFP as avatar, but keep simple
+      document.getElementById('status').textContent = `Your turn (X), ${user.displayName || user.username}!`;
+      console.log(`User FID: ${user.fid}`);
+
+      // Check capabilities
+      const capabilities = await sdk.getCapabilities();
+      features = await sdk.getFeatures(); // Store globally for haptics
+      if (!capabilities.wallet) {
+        console.log('Wallet not supported in this client');
+        document.getElementById('status').textContent = 'Wallet not supported. Play without betting.';
       }
-      // Enable haptics if supported
-      const features = await sdk.getFeatures();
-      if (features.haptics) {
-        // Use in endGame() for vibes
-      }
-      sdk.actions.ready();  // Hides splash; call ASAP after init
+
+      // Initialize wallet
       await initWallet();
+      sdk.actions.ready(); // Hide splash screen
     });
   </script>
 </head>
@@ -230,9 +239,8 @@
     </div>
   </div>
   <button onclick="restartGame()">Restart Game</button>
-  <button id="betButton" class="bet-btn hidden" onclick="placeBet()">Bet 0.001 ETH</button>
-  <!-- Hugging Face link -->
-  <a 🤖 on Deepak>
+  <button id="connectButton" class="connect-btn" onclick="initWallet()">Connect Wallet</button>
+  <button id="betButton" class="bet-btn" style="display: none;" onclick="placeBet()">Bet 0.0001 ETH</button>
   <script>
     const cells = document.querySelectorAll('.cell');
     const statusEl = document.getElementById('status');
@@ -240,51 +248,62 @@
     let board = Array(9).fill(null);
     let gameOver = false;
     let scores = { player: 0, draw: 0, bot: 0 };
+    let provider;
+    let userAddress;
+    let features; // Global for haptics
     const winPatterns = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8],
       [0, 3, 6], [1, 4, 7], [2, 5, 8],
       [0, 4, 8], [2, 4, 6]
     ];
+
     cells.forEach(c => c.addEventListener('click', handlePlayerMove));
 
-    // Global vars for wallet
-    let provider;
-    let userAddress;
-    let features; // Assuming features is global or passed
-
     async function initWallet() {
-      provider = sdk.wallet.getEthereumProvider();
-      if (!provider) {
-        console.log('Wallet not supported');  // Fallback: Hide bet UI
-        return;
-      }
       try {
+        provider = sdk.wallet.getEthereumProvider();
+        if (!provider) {
+          statusEl.textContent = 'Wallet not available. Play without betting.';
+          console.log('No wallet provider');
+          document.getElementById('connectButton').style.display = 'block';
+          document.getElementById('betButton').style.display = 'none';
+          return;
+        }
         const accounts = await provider.request({ method: 'eth_requestAccounts' });
         userAddress = accounts[0];
         console.log(`Wallet connected: ${userAddress}`);
-        // Update UI: Show bet button if address
-        document.getElementById('betButton')?.classList.remove('hidden');
+        statusEl.textContent = `Your turn (X) - Wallet: ${userAddress.slice(0, 6)}...`;
+        document.getElementById('connectButton').style.display = 'none';
+        document.getElementById('betButton').style.display = 'block';
       } catch (err) {
         console.error('Wallet connect failed:', err);
+        statusEl.textContent = 'Failed to connect wallet. Try again.';
+        document.getElementById('connectButton').style.display = 'block';
+        document.getElementById('betButton').style.display = 'none';
       }
     }
 
-    async function placeBet(amount = '0.001') {  // In ETH; use wei in prod
-      if (!provider || !userAddress) return;
+    async function placeBet(amount = '0.001') {
+      if (!provider || !userAddress) {
+        statusEl.textContent = 'Please connect wallet first!';
+        return;
+      }
       try {
         const params = [{
           from: userAddress,
-          to: '0xYourGameContract',  // Deploy a simple contract for escrow/refund
-          value: ethers.utils.parseEther(amount).toHexString(),  // Need ethers.js via CDN
-          data: '0x',  // Or encode bet (e.g., game ID)
+          to: '0xYourGameContract', // Replace with your contract address
+          value: ethers.utils.parseEther(amount).toHexString(),
+          data: '0x',
         }];
         const txHash = await provider.request({ method: 'eth_sendTransaction', params });
         console.log('Bet placed:', txHash);
-        // Haptic success
-        if (features.haptics) sdk.actions.hapticFeedback({ type: 'success' });
-        // On win: Refund + bonus via contract
+        statusEl.textContent = 'Bet placed! Your turn (X)';
+        if (features?.haptics) {
+          sdk.actions.hapticFeedback({ type: 'success' });
+        }
       } catch (err) {
         console.error('Bet failed:', err);
+        statusEl.textContent = 'Bet failed. Try again.';
       }
     }
 
@@ -305,7 +324,7 @@
       const winner = checkWinner();
       if (winner) endGame(winner);
       else if (board.every(Boolean)) endGame('draw');
-      else statusEl.textContent = 'Your turn (X)';
+      else statusEl.textContent = `Your turn (X) ${userAddress ? '- Wallet: ' + userAddress.slice(0, 6) + '...' : ''}`;
     }
 
     function checkWinner(b = board) {
@@ -315,7 +334,7 @@
       return null;
     }
 
-    function endGame(result) {
+    async function endGame(result) {
       gameOver = true;
       cells.forEach(c => c.classList.add('disabled'));
       if (result === 'draw') {
@@ -333,9 +352,14 @@
           document.getElementById('botScore').textContent = scores.bot;
         }
       }
-      if (features.haptics) {
+      if (features?.haptics) {
         sdk.actions.hapticFeedback({ type: result === 'draw' ? 'light' : result === 'x' ? 'success' : 'failure' });
       }
+      // Share game result
+      const shareUrl = `${window.location.origin}?board=${btoa(JSON.stringify(board))}&result=${result}`;
+      await sdk.actions.post({
+        text: `Tic-Tac-Toe: ${result === 'x' ? 'I won!' : result === 'o' ? 'Bot won!' : 'Draw!'}\nPlay me: ${shareUrl}`,
+      });
     }
 
     function bestMove() {
@@ -385,7 +409,7 @@
         c.className = 'cell';
       });
       winLine.className = 'win-line';
-      statusEl.textContent = 'Your turn (X)';
+      statusEl.textContent = `Your turn (X) ${userAddress ? '- Wallet: ' + userAddress.slice(0, 6) + '...' : ''}`;
     }
   </script>
 </body>
