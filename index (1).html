@@ -1,0 +1,399 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe 4x4</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Farcaster Mini App Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Open Graph Metadata for Embed Preview -->
+    <meta property="og:title" content="Tic-Tac-Toe 4x4 Game">
+    <meta property="og:description" content="Play Tic-Tac-Toe against AI with Farcaster wallet authentication!">
+    <meta property="og:image" content="https://tic-tac-toe-4x4-five.vercel.app/og-image.png">
+    <meta property="og:url" content="https://tic-tac-toe-4x4-five.vercel.app">
+    <meta property="og:type" content="website">
+
+    <!-- Farcaster-Specific Tags -->
+    <meta name="farcaster:frame" content="true">
+    <meta name="farcaster:frame:button:1" content="Play Now">
+
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #166088;
+            --accent: #4fc3dc;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --cell-size: 80px;
+        }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            text-align: center;
+            max-width: 390px;
+            padding: 20px;
+        }
+        h1 {
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-warning { background: var(--warning); color: var(--dark); }
+        .status { font-size: 18px; margin: 20px 0; }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(4, var(--cell-size));
+            gap: 5px;
+            background: var(--dark);
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            background: var(--light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            cursor: pointer;
+        }
+        .cell.x::before { content: 'X'; color: var(--danger); }
+        .cell.o::before { content: 'O'; color: var(--accent); }
+        .cell.winning-cell { background: var(--success); }
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .score {
+            background: var(--secondary);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .score-title { font-size: 16px; }
+        .score-value { font-size: 24px; font-weight: bold; }
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        @keyframes pulse {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tic-Tac-Toe 4x4</h1>
+        <div class="game-controls">
+            <button id="connect-btn" class="btn btn-primary">
+                <i class="fas fa-wallet"></i> Connect Farcaster Wallet
+            </button>
+            <button id="reset-btn" class="btn btn-warning">
+                <i class="fas fa-sync-alt"></i> New Game
+            </button>
+            <button id="reset-score-btn" class="btn btn-success">
+                <i class="fas fa-trophy"></i> Reset Scores
+            </button>
+        </div>
+        <div class="status" id="status">Connect wallet to play</div>
+        <div class="board" id="board" style="display: none;"></div>
+        <div class="scoreboard">
+            <div class="score">
+                <div class="score-title">You (X)</div>
+                <div class="score-value" id="x-score">0</div>
+            </div>
+            <div class="score">
+                <div class="score-title">Draws</div>
+                <div class="score-value" id="draw-score">0</div>
+            </div>
+            <div class="score">
+                <div class="score-title">Computer (O)</div>
+                <div class="score-value" id="o-score">0</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@farcaster/auth-client"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const boardElement = document.getElementById('board');
+            const statusElement = document.getElementById('status');
+            const xScoreElement = document.getElementById('x-score');
+            const oScoreElement = document.getElementById('o-score');
+            const drawScoreElement = document.getElementById('draw-score');
+            const connectBtn = document.getElementById('connect-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const resetScoreBtn = document.getElementById('reset-score-btn');
+
+            // Farcaster SDK initialization
+            const client = new window.FarcasterAuthClient();
+            try {
+                await client.actions.ready({ disableNativeGestures: true });
+                console.log('Farcaster SDK Ready');
+            } catch (error) {
+                console.error('SDK Init Failed:', error);
+                statusElement.textContent = 'SDK failed. Reload in Warpcast.';
+                return;
+            }
+
+            // Game state
+            let board = Array(16).fill(null);
+            let currentPlayer = 'X';
+            let gameActive = false;
+            let userAddress = null;
+            let scores = { X: 0, O: 0, draw: 0 };
+
+            // Wallet connection
+            async function connectWallet() {
+                try {
+                    const { address } = await client.connect();
+                    userAddress = address;
+                    connectBtn.innerHTML = `<i class="fas fa-wallet"></i> Connected: ${address.slice(0, 6)}...${address.slice(-4)}`;
+                    connectBtn.disabled = true;
+                    statusElement.textContent = `Your turn (X)`;
+                    boardElement.style.display = 'grid';
+                    gameActive = true;
+                    initializeBoard();
+                } catch (error) {
+                    console.error('Wallet connection error:', error);
+                    statusElement.textContent = 'Wallet connection failed. Try again in Warpcast.';
+                    const retryDiv = document.createElement('div');
+                    retryDiv.innerHTML = `<button id="retry-btn" class="btn btn-primary" style="margin-top: 10px;"><i class="fas fa-redo"></i> Retry Connect</button>`;
+                    statusElement.appendChild(retryDiv);
+                    document.getElementById('retry-btn').addEventListener('click', connectWallet);
+                }
+            }
+
+            // Initialize the board
+            function initializeBoard() {
+                if (!userAddress) {
+                    statusElement.textContent = 'Connect wallet to play';
+                    boardElement.style.display = 'none';
+                    return;
+                }
+                boardElement.innerHTML = '';
+                board = Array(16).fill(null);
+                currentPlayer = 'X';
+                gameActive = true;
+                statusElement.textContent = `Your turn (X)`;
+                for (let i = 0; i < 16; i++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.setAttribute('data-index', i);
+                    cell.addEventListener('click', handleCellClick);
+                    boardElement.appendChild(cell);
+                }
+            }
+
+            // Handle cell click
+            async function handleCellClick(e) {
+                if (!gameActive || !userAddress) {
+                    statusElement.textContent = 'Connect wallet to play';
+                    return;
+                }
+                const index = parseInt(e.target.getAttribute('data-index'));
+                if (board[index] !== null || currentPlayer === 'O') return;
+                await makeMove(index);
+                if (gameActive && currentPlayer === 'O') {
+                    setTimeout(computerMove, 800);
+                }
+            }
+
+            // Make a move
+            async function makeMove(index) {
+                board[index] = currentPlayer;
+                const cell = document.querySelector(`.cell[data-index="${index}"]`);
+                if (currentPlayer === 'X') {
+                    cell.classList.add('x');
+                } else {
+                    cell.classList.add('o');
+                }
+                const winningPattern = checkWinner();
+                if (winningPattern) {
+                    const winner = currentPlayer;
+                    scores[winner]++;
+                    updateScoreboard();
+                    gameActive = false;
+                    highlightWinningCells();
+                    showConfetti();
+                    statusElement.textContent = winner === 'X' ? 'You win!' : 'Computer wins!';
+                } else if (board.every(cell => cell !== null)) {
+                    scores.draw++;
+                    updateScoreboard();
+                    gameActive = false;
+                    statusElement.textContent = 'Game ended in a draw!';
+                } else {
+                    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                    statusElement.textContent = currentPlayer === 'X' ? 'Your turn (X)' : 'Computer is thinking...';
+                }
+            }
+
+            // Computer move
+            function computerMove() {
+                if (!gameActive) return;
+                let bestMove = findWinningMove('O') || findWinningMove('X') || findRandomMove();
+                makeMove(bestMove);
+            }
+
+            function findWinningMove(player) {
+                for (let i = 0; i < 16; i++) {
+                    if (board[i] === null) {
+                        board[i] = player;
+                        const hasWon = checkWinner();
+                        board[i] = null;
+                        if (hasWon) return i;
+                    }
+                }
+                return null;
+            }
+
+            function findRandomMove() {
+                const emptyCells = [];
+                for (let i = 0; i < 16; i++) {
+                    if (board[i] === null) emptyCells.push(i);
+                }
+                return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            }
+
+            // Check for winner
+            function checkWinner() {
+                const winPatterns = [
+                    [0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15],
+                    [0, 4, 8, 12], [1, 5, 9, 13], [2, 6, 10, 14], [3, 7, 11, 15],
+                    [0, 5, 10, 15], [3, 6, 9, 12]
+                ];
+                for (const pattern of winPatterns) {
+                    const [a, b, c, d] = pattern;
+                    if (board[a] && board[a] === board[b] && board[a] === board[c] && board[a] === board[d]) {
+                        return pattern;
+                    }
+                }
+                return null;
+            }
+
+            // Highlight winning cells
+            function highlightWinningCells() {
+                const winningPattern = checkWinner();
+                if (winningPattern) {
+                    winningPattern.forEach(index => {
+                        const cell = document.querySelector(`.cell[data-index="${index}"]`);
+                        cell.classList.add('winning-cell');
+                    });
+                }
+            }
+
+            // Update scoreboard
+            function updateScoreboard() {
+                xScoreElement.textContent = scores.X;
+                oScoreElement.textContent = scores.O;
+                drawScoreElement.textContent = scores.draw;
+            }
+
+            // Show confetti animation
+            function showConfetti() {
+                const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+                for (let i = 0; i < 50; i++) {
+                    setTimeout(() => {
+                        const confetti = document.createElement('div');
+                        confetti.classList.add('confetti');
+                        confetti.style.left = Math.random() * 100 + '%';
+                        confetti.style.top = Math.random() * 100 + '%';
+                        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                        confetti.style.animation = 'pulse 2s ease-out forwards';
+                        document.body.appendChild(confetti);
+                        setTimeout(() => confetti.remove(), 2000);
+                    }, i * 50);
+                }
+            }
+
+            // Event listeners
+            connectBtn.addEventListener('click', connectWallet);
+            resetBtn.addEventListener('click', initializeBoard);
+            resetScoreBtn.addEventListener('click', () => {
+                scores = { X: 0, O: 0, draw: 0 };
+                updateScoreboard();
+                initializeBoard();
+            });
+
+            // Initialize
+            initializeBoard();
+        });
+    </script>
+</body>
+</html>
