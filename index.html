@@ -4,6 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tic-Tac-Toe AI</title>
+    <!-- Farcaster Mini App Metadata (Simplified for demonstration) -->
+  <meta name="fc:miniapp" content='{
+      "version":"1",
+      "imageUrl":"https://tic-tac-toe-4x4.vercel.app/image.png",
+      "button":{
+        "title":"Tic-Tac-Toe AI",
+        "action":{
+          "type":"launch_frame",
+          "name":"LAUNCH",
+          "url":"https://tic-tac-toe-4x4.vercel.app/",
+          "splashImageUrl":"https://tic-tac-toe-4x4.vercel.app/splash.png",
+          "splashBackgroundColor":"#1B1B1E"
+          }
+        }
+    }' />
   <style>
     :root {
       --primary: #0f172a;
@@ -185,12 +200,56 @@
       }
     }
   </style>
+  <!-- Farcaster SDK and Viem/Wagmi Imports (UPDATED) -->
   <script type="module">
+    // Farcaster SDK initialization
     import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
+    sdk.actions.ready({ disableNativeGestures: true });
+
+    // --- WAGMI / VIEM IMPORTS ---
+    import {
+      createConfig,
+      connect,
+      writeContract,
+      readContract,
+      getAccount,
+      getChainId,
+      switchChain,
+      http,
+      waitForTransactionReceipt
+    } from 'https://esm.sh/@wagmi/core';
+    import { farcasterMiniApp } from 'https://esm.sh/@farcaster/miniapp-wagmi-connector';
+    import { parseEther } from 'https://esm.sh/viem';
+
+    window.WAGMI_CORE = {
+      createConfig,
+      connect,
+      writeContract,
+      readContract,
+      getAccount,
+      getChainId,
+      switchChain,
+      http,
+      waitForTransactionReceipt
+    };
+    window.FARCASTER_WAGMI = {
+      farcasterMiniApp
+    };
+    window.VIEM = {
+      parseEther
+    };
+    window.sdk = sdk; // Make sdk available globally for the second script block
+  </script>
+  <!-- Game logic script block (ORIGINAL) -->
+  <script type="module">
+    // Import SDK from global scope set above
+    const sdk = window.sdk;
 
     window.addEventListener('DOMContentLoaded', async () => {
       try {
         // Call ready() early to hide splash screen
+        // Note: The sdk.actions.ready() with disableNativeGestures: true is already called above.
+        // We ensure a simple ready call here just in case, but rely on the one above for configuration.
         await sdk.actions.ready();
 
         // Initialize user context
@@ -269,8 +328,18 @@
 
     cells.forEach(c => c.addEventListener('click', handlePlayerMove));
 
+    // Note: The original initWallet used sdk.wallet.getEthereumProvider().
+    // You now have Wagmi/Viem available via module imports (window.WAGMI_CORE, etc.),
+    // but the existing logic is simpler and uses the Farcaster SDK directly,
+    // which is often sufficient for basic wallet authentication in a Mini App.
+    // I'm keeping the original logic for simplicity, but you can switch to Wagmi
+    // later if you need more complex contract interactions.
+
     async function initWallet() {
       try {
+        // You would use window.WAGMI_CORE.createConfig and connect here
+        // if fully implementing Wagmi, but for basic connection,
+        // using the SDK provider is fast and reliable.
         const provider = sdk.wallet.getEthereumProvider();
         if (!provider) {
           throw new Error('Wallet provider not available');
