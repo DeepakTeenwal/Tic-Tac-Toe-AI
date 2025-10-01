@@ -1,9 +1,20 @@
 {
-  "version": "1",
-  "name": "Tic-Tac-Toe vs AI",
-  "iconUrl": "https://tic-tac-toe-ai-tau.vercel.app/icon.png",
-  "requiredCapabilities": ["wallet"],
-  "requiredChains": ["eip155:8453"],
-  "notificationUrl": "https://tic-tac-toe-ai-tau.vercel.app/api/notify",
-  "webhookUrl": "https://tic-tac-toe-ai-tau.vercel.app/api/webhook"
+  "frame": {
+    "name": "Tic-Tac-Toe AI",
+    "version": "1",
+    "iconUrl": "https://tic-tac-toe-4x4.vercel.app/icon.png",
+    "homeUrl": "https://tic-tac-toe-4x4.vercel.app",
+    "imageUrl": "https://tic-tac-toe-4x4.vercel.app/image.png",
+    "splashImageUrl": "https://tic-tac-toe-4x4.vercel.app/splash.png",
+    "splashBackgroundColor": "#1B1B1E",
+    "webhookUrl": "https://tic-tac-toe-4x4.vercel.app/api/webhook",
+    "subtitle": "Unbeatable AI Tic-Tac-Toe Game",
+    "description": "Play classic Tic-Tac-Toe against an unbeatable AI using Minimax. Fast gameplay, human vs computer, desktop and mobile support, no setup needed.",
+    "primaryCategory": "games"
+  },
+  "accountAssociation": {
+    "header": "eyJmaWQiOjYxMjA2NiwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDE4MjhjNEJmNzhEQWI2NkI0QjdkZUJmYUEzOEYwQWQxMjVFYzhkMTUifQ",
+    "payload": "eyJkb21haW4iOiJ0aWMtdGFjLXRvZS00eDQudmVyY2VsLmFwcCJ9",
+    "signature": "97Wd1ZC3WS6gSm1AlZ6XRyWLc1d0NYyxgjvjAwWKE093pFeEQK2HsOdFZKjAXksraFbD6o6Y9UBZJFgCO/Km+Rs="
+  }
 }
