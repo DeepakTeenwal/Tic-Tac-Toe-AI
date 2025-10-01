@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic-Tac-Toe-4x4</title>
+    <title>Tic-Tac-Toe 4x4</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Farcaster Mini App Manifest -->
     <link rel="manifest" href="/manifest.json">
-    
+
     <!-- Open Graph Metadata for Embed Preview -->
-    <meta property="og:title" content="Tic-Tac-Toe 4x4 - Win NOICE Tokens!">
-    <meta property="og:description" content="Play Tic-Tac-Toe against AI and claim 1-30 NOICE tokens per win!">
+    <meta property="og:title" content="Tic-Tac-Toe 4x4 Game">
+    <meta property="og:description" content="Play Tic-Tac-Toe against AI with Farcaster wallet authentication!">
     <meta property="og:image" content="https://tic-tac-toe-4x4-five.vercel.app/og-image.png">
     <meta property="og:url" content="https://tic-tac-toe-4x4-five.vercel.app">
     <meta property="og:type" content="website">
-    
+
     <!-- Farcaster-Specific Tags -->
     <meta name="farcaster:frame" content="true">
     <meta name="farcaster:frame:button:1" content="Play Now">
-    
+
     <style>
         :root {
             --primary: #4a6fa5;
@@ -106,13 +106,6 @@
         }
         .score-title { font-size: 16px; }
         .score-value { font-size: 24px; font-weight: bold; }
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-            font-size: 16px;
-            font-weight: bold;
-        }
         .confetti {
             position: fixed;
             width: 10px;
@@ -127,10 +120,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>Tic-Tac-Toe-4x4</h1>
+        <h1>Tic-Tac-Toe 4x4</h1>
         <div class="game-controls">
             <button id="connect-btn" class="btn btn-primary">
-                <i class="fas fa-wallet"></i> Connect Wallet
+                <i class="fas fa-wallet"></i> Connect Farcaster Wallet
             </button>
             <button id="reset-btn" class="btn btn-warning">
                 <i class="fas fa-sync-alt"></i> New Game
@@ -139,8 +132,8 @@
                 <i class="fas fa-trophy"></i> Reset Scores
             </button>
         </div>
-        <div class="status" id="status">Your turn (X)</div>
-        <div class="board" id="board"></div>
+        <div class="status" id="status">Connect wallet to play</div>
+        <div class="board" id="board" style="display: none;"></div>
         <div class="scoreboard">
             <div class="score">
                 <div class="score-title">You (X)</div>
@@ -155,372 +148,53 @@
                 <div class="score-value" id="o-score">0</div>
             </div>
         </div>
-        <div class="stats">
-            <div id="total-tokens">Total NOICE Claimed: 0</div>
-            <div id="user-wins">Your Wins: 0</div>
-        </div>
     </div>
 
-    <script type="module">
-        import { createConfig, connect, readContract, writeContract, http } from 'https://esm.sh/@wagmi/core';
-        import { base } from 'https://esm.sh/@wagmi/core/chains';
-        import { farcasterMiniApp } from 'https://esm.sh/@farcaster/miniapp-wagmi-connector';
-        import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
-        import { ethers } from 'https://esm.sh/ethers@6';
-
-        // Check Node.js version in dev environment
-        if (typeof process !== 'undefined' && process.versions.node) {
-            const nodeVersion = process.versions.node;
-            if (parseFloat(nodeVersion) < 22.11) {
-                console.warn(`Node.js version ${nodeVersion} is not supported. Please use 22.11.0 or higher.`);
-            }
-        }
-
-        // Wagmi config for Base
-        const config = createConfig({
-            chains: [base],
-            transports: {
-                [base.id]: http('https://mainnet.base.org')
-            }
-        });
-
+    <script src="https://unpkg.com/@farcaster/auth-client"></script>
+    <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                await sdk.actions.ready({ disableNativeGestures: true });
-                console.log('SDK Ready:', sdk.context);
-            } catch (error) {
-                console.error('SDK Init Failed:', error);
-                document.getElementById('status').textContent += ' | SDK failed. Reload.';
-                return;
-            }
-
             const boardElement = document.getElementById('board');
             const statusElement = document.getElementById('status');
             const xScoreElement = document.getElementById('x-score');
             const oScoreElement = document.getElementById('o-score');
             const drawScoreElement = document.getElementById('draw-score');
+            const connectBtn = document.getElementById('connect-btn');
             const resetBtn = document.getElementById('reset-btn');
             const resetScoreBtn = document.getElementById('reset-score-btn');
-            const connectBtn = document.getElementById('connect-btn');
-            const totalTokensElement = document.getElementById('total-tokens');
-            const userWinsElement = document.getElementById('user-wins');
 
+            // Farcaster SDK initialization
+            const client = new window.FarcasterAuthClient();
+            try {
+                await client.actions.ready({ disableNativeGestures: true });
+                console.log('Farcaster SDK Ready');
+            } catch (error) {
+                console.error('SDK Init Failed:', error);
+                statusElement.textContent = 'SDK failed. Reload in Warpcast.';
+                return;
+            }
+
+            // Game state
             let board = Array(16).fill(null);
             let currentPlayer = 'X';
-            let gameActive = true;
-            let scores = { X: 0, O: 0, draw: 0 };
+            let gameActive = false;
             let userAddress = null;
-            let prizeAmount = null;
-            let claimButton = null;
+            let scores = { X: 0, O: 0, draw: 0 };
 
-            const TOKEN_ADDRESS = '0x9cb41fd9dc6891bae8187029461bfaadf6cc0c69';
-            const CLAIM_CONTRACT_ADDRESS = '0xYOUR_DEPLOYED_CONTRACT_ADDRESS';
-            const CLAIM_WINDOW = 86400;
-            const BACKEND_URL = 'https://your-backend-api.com/set-winner';
-            const CLAIM_ABI = [
-                {
-                    "inputs": [{"internalType": "address", "name": "winner", "type": "address"}],
-                    "name": "setWinner",
-                    "outputs": [],
-                    "stateMutability": "nonpayable",
-                    "type": "function"
-                },
-                {
-                    "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
-                    "name": "claim",
-                    "outputs": [],
-                    "stateMutability": "nonpayable",
-                    "type": "function"
-                },
-                {
-                    "inputs": [{"internalType": "address", "name": "", "type": "address"}],
-                    "name": "lastWinTimestamp",
-                    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                    "stateMutability": "view",
-                    "type": "function"
-                },
-                {
-                    "inputs": [{"internalType": "address", "name": "", "type": "address"}],
-                    "name": "wins",
-                    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                    "stateMutability": "view",
-                    "type": "function"
-                },
-                {
-                    "inputs": [],
-                    "name": "totalPrizesClaimed",
-                    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                    "stateMutability": "view",
-                    "type": "function"
-                }
-            ];
-
+            // Wallet connection
             async function connectWallet() {
                 try {
-                    const result = await connect(config, { connector: farcasterMiniApp() });
-                    userAddress = result.accounts[0];
-                    connectBtn.innerHTML = `<i class="fas fa-wallet"></i> Connected: ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+                    const { address } = await client.connect();
+                    userAddress = address;
+                    connectBtn.innerHTML = `<i class="fas fa-wallet"></i> Connected: ${address.slice(0, 6)}...${address.slice(-4)}`;
                     connectBtn.disabled = true;
-                    statusElement.textContent = 'Your turn (X) | Wallet connected';
-                    const [wins, totalPrizes] = await Promise.all([
-                        readContract(config, {
-                            address: CLAIM_CONTRACT_ADDRESS,
-                            abi: CLAIM_ABI,
-                            functionName: 'wins',
-                            args: [userAddress]
-                        }),
-                        readContract(config, {
-                            address: CLAIM_CONTRACT_ADDRESS,
-                            abi: CLAIM_ABI,
-                            functionName: 'totalPrizesClaimed'
-                        })
-                    ]);
-                    userWinsElement.textContent = `Your Wins: ${wins}`;
-                    totalTokensElement.textContent = `Total NOICE Claimed: ${ethers.formatUnits(totalPrizes, 18)}`;
-                    if (wins > 0) {
-                        statusElement.textContent += ` | You have ${wins} unclaimed wins!`;
-                    }
+                    statusElement.textContent = `Your turn (X)`;
+                    boardElement.style.display = 'grid';
+                    gameActive = true;
+                    initializeBoard();
                 } catch (error) {
-                    console.error('Connection failed:', error);
-                    let errorMsg = 'Wallet connection failed: ';
-                    if (error.code === 4001) errorMsg += 'User rejected request.';
-                    else if (error.message.includes('not available')) errorMsg += 'Farcaster wallet unavailable. Open in Warpcast.';
-                    else errorMsg += error.message;
-                    statusElement.textContent = `Your turn (X) | ${errorMsg}`;
+                    console.error('Wallet connection error:', error);
+                    statusElement.textContent = 'Wallet connection failed. Try again in Warpcast.';
                     const retryDiv = document.createElement('div');
                     retryDiv.innerHTML = `<button id="retry-btn" class="btn btn-primary" style="margin-top: 10px;"><i class="fas fa-redo"></i> Retry Connect</button>`;
                     statusElement.appendChild(retryDiv);
-                    document.getElementById('retry-btn').addEventListener('click', connectWallet);
-                }
-            }
-
-            async function notifyBackendSetWinner(winnerAddress) {
-                try {
-                    const response = await fetch(BACKEND_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ winnerAddress })
-                    });
-                    if (!response.ok) throw new Error('Backend failed to set winner');
-                    const { txHash } = await response.json();
-                    console.log(`Winner set: ${txHash}`);
-                    return txHash;
-                } catch (error) {
-                    console.error('Set winner failed:', error);
-                    statusElement.textContent = `Failed to set winner: ${error.message}`;
-                    return null;
-                }
-            }
-
-            async function claimPrize() {
-                if (!userAddress) {
-                    await connectWallet();
-                    if (!userAddress) return;
-                }
-                if (!prizeAmount) {
-                    statusElement.textContent = 'No prize available';
-                    return;
-                }
-                try {
-                    const amountWei = ethers.parseUnits(prizeAmount.toString(), 18);
-                    const lastWin = await readContract(config, {
-                        address: CLAIM_CONTRACT_ADDRESS,
-                        abi: CLAIM_ABI,
-                        functionName: 'lastWinTimestamp',
-                        args: [userAddress]
-                    });
-                    const now = Math.floor(Date.now() / 1000);
-                    if (Number(lastWin) + CLAIM_WINDOW < now) {
-                        statusElement.textContent = 'Claim window expired. Play again!';
-                        if (claimButton) claimButton.remove();
-                        return;
-                    }
-                    statusElement.textContent = `Claiming ${prizeAmount} NOICE...`;
-                    const tx = await writeContract(config, {
-                        address: CLAIM_CONTRACT_ADDRESS,
-                        abi: CLAIM_ABI,
-                        functionName: 'claim',
-                        args: [amountWei]
-                    });
-                    statusElement.textContent = `Claim successful! You received ${prizeAmount} NOICE. Tx: ${tx}`;
-                    if (claimButton) claimButton.remove();
-                    const [wins, totalPrizes] = await Promise.all([
-                        readContract(config, {
-                            address: CLAIM_CONTRACT_ADDRESS,
-                            abi: CLAIM_ABI,
-                            functionName: 'wins',
-                            args: [userAddress]
-                        }),
-                        readContract(config, {
-                            address: CLAIM_CONTRACT_ADDRESS,
-                            abi: CLAIM_ABI,
-                            functionName: 'totalPrizesClaimed'
-                        })
-                    ]);
-                    userWinsElement.textContent = `Your Wins: ${wins}`;
-                    totalTokensElement.textContent = `Total NOICE Claimed: ${ethers.formatUnits(totalPrizes, 18)}`;
-                } catch (error) {
-                    console.error('Claim failed:', error);
-                    statusElement.textContent = `Claim failed: ${error.message}`;
-                }
-            }
-
-            function initializeBoard() {
-                boardElement.innerHTML = '';
-                board = Array(16).fill(null);
-                currentPlayer = 'X';
-                gameActive = true;
-                statusElement.textContent = 'Your turn (X)';
-                if (claimButton) claimButton.remove();
-                prizeAmount = null;
-                for (let i = 0; i < 16; i++) {
-                    const cell = document.createElement('div');
-                    cell.classList.add('cell');
-                    cell.setAttribute('data-index', i);
-                    cell.addEventListener('click', handleCellClick);
-                    boardElement.appendChild(cell);
-                }
-            }
-
-            async function handleCellClick(e) {
-                const index = parseInt(e.target.getAttribute('data-index'));
-                if (board[index] !== null || !gameActive || currentPlayer === 'O') return;
-                await makeMove(index);
-                if (gameActive && currentPlayer === 'O') {
-                    setTimeout(computerMove, 800);
-                }
-            }
-
-            async function makeMove(index) {
-                board[index] = currentPlayer;
-                const cell = document.querySelector(`.cell[data-index="${index}"]`);
-                if (currentPlayer === 'X') {
-                    cell.classList.add('x');
-                } else {
-                    cell.classList.add('o');
-                }
-                const winningPattern = checkWinner();
-                if (winningPattern) {
-                    const winner = currentPlayer;
-                    scores[winner]++;
-                    updateScoreboard();
-                    gameActive = false;
-                    highlightWinningCells();
-                    showConfetti();
-                    let winMessage = winner === 'X' ? 'You win!' : 'Computer wins!';
-                    if (winner === 'X') {
-                        prizeAmount = Math.floor(Math.random() * 30) + 1;
-                        winMessage += ` Prize: ${prizeAmount} NOICE! Claim by ${new Date((Date.now() / 1000 + CLAIM_WINDOW) * 1000).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`;
-                        if (userAddress) {
-                            const txHash = await notifyBackendSetWinner(userAddress);
-                            if (txHash) {
-                                const claimDiv = document.createElement('div');
-                                claimDiv.innerHTML = `<button id="claim-prize-btn" class="btn btn-success" style="margin-top: 10px;"><i class="fas fa-gift"></i> Claim ${prizeAmount} NOICE</button>`;
-                                statusElement.appendChild(claimDiv);
-                                claimButton = document.getElementById('claim-prize-btn');
-                                claimButton.addEventListener('click', claimPrize);
-                            } else {
-                                winMessage += ' Failed to set winner. Try again.';
-                            }
-                        } else {
-                            winMessage += ' Connect wallet to claim!';
-                        }
-                    }
-                    statusElement.innerHTML = winMessage;
-                } else if (board.every(cell => cell !== null)) {
-                    scores.draw++;
-                    updateScoreboard();
-                    gameActive = false;
-                    statusElement.textContent = 'Game ended in a draw!';
-                } else {
-                    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-                    statusElement.textContent = currentPlayer === 'X' ? 'Your turn (X)' : 'Computer is thinking...';
-                }
-            }
-
-            function computerMove() {
-                if (!gameActive) return;
-                let bestMove = findWinningMove('O') || findWinningMove('X') || findRandomMove();
-                makeMove(bestMove);
-            }
-
-            function findWinningMove(player) {
-                for (let i = 0; i < 16; i++) {
-                    if (board[i] === null) {
-                        board[i] = player;
-                        const hasWon = checkWinner();
-                        board[i] = null;
-                        if (hasWon) return i;
-                    }
-                }
-                return null;
-            }
-
-            function findRandomMove() {
-                const emptyCells = [];
-                for (let i = 0; i < 16; i++) {
-                    if (board[i] === null) emptyCells.push(i);
-                }
-                return emptyCells[Math.floor(Math.random() * emptyCells.length)];
-            }
-
-            function checkWinner() {
-                const winPatterns = [
-                    [0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15],
-                    [0, 4, 8, 12], [1, 5, 9, 13], [2, 6, 10, 14], [3, 7, 11, 15],
-                    [0, 5, 10, 15], [3, 6, 9, 12]
-                ];
-                for (const pattern of winPatterns) {
-                    const [a, b, c, d] = pattern;
-                    if (board[a] && board[a] === board[b] && board[a] === board[c] && board[a] === board[d]) {
-                        return pattern;
-                    }
-                }
-                return null;
-            }
-
-            function highlightWinningCells() {
-                const winningPattern = checkWinner();
-                if (winningPattern) {
-                    winningPattern.forEach(index => {
-                        const cell = document.querySelector(`.cell[data-index="${index}"]`);
-                        cell.classList.add('winning-cell');
-                    });
-                }
-            }
-
-            function updateScoreboard() {
-                xScoreElement.textContent = scores.X;
-                oScoreElement.textContent = scores.O;
-                drawScoreElement.textContent = scores.draw;
-            }
-
-            function showConfetti() {
-                const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
-                for (let i = 0; i < 50; i++) {
-                    setTimeout(() => {
-                        const confetti = document.createElement('div');
-                        confetti.classList.add('confetti');
-                        confetti.style.left = Math.random() * 100 + '%';
-                        confetti.style.top = Math.random() * 100 + '%';
-                        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                        confetti.style.animation = 'pulse 2s ease-out forwards';
-                        document.body.appendChild(confetti);
-                        setTimeout(() => confetti.remove(), 2000);
-                    }, i * 50);
-                }
-            }
-
-            connectBtn.addEventListener('click', connectWallet);
-            resetBtn.addEventListener('click', initializeBoard);
-            resetScoreBtn.addEventListener('click', () => {
-                scores = { X: 0, O: 0, draw: 0 };
-                updateScoreboard();
-                initializeBoard();
-            });
-
-            initializeBoard();
-        });
-    </script>
-</body>
-</html>
+                    document.getElementById('retry
