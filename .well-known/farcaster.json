@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Tic-Tac-Toe vs AI",
+  "iconUrl": "https://tic-tac-toe-ai-tau.vercel.app/icon.png",
+  "requiredCapabilities": ["wallet"],
+  "requiredChains": ["eip155:8453"],
+  "notificationUrl": "https://tic-tac-toe-ai-tau.vercel.app/api/notify",
+  "webhookUrl": "https://tic-tac-toe-ai-tau.vercel.app/api/webhook"
+}
