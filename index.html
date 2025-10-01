@@ -1,340 +1,392 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic-Tac-Toe vs AI</title>
-    <style>
-        :root {
-            --primary: #0f172a;
-            --secondary: #1e293b;
-            --accent: #0ea5e9;
-            --win: #10b981;
-            --lose: #ef4444;
-            --draw: #f59e0b;
-            --text: #e2e8f0;
-            --subtle: #64748b;
-            --cell-size: min(25vw, 120px);
-            --transition: all .3s cubic-bezier(.4,0,.2,1);
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body {
-            display: grid;
-            place-content: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: var(--text);
-            padding: 2rem;
-            position: relative;
-        }
-        h1 {
-            font-size: clamp(1.5rem, 4vw, 2.5rem);
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 1rem;
-            letter-spacing: .05em;
-        }
-        #status {
-            text-align: center;
-            font-size: 1.125rem;
-            min-height: 1.5em;
-            margin-bottom: 1.5rem;
-            transition: var(--transition);
-        }
-        #board {
-            display: grid;
-            grid-template-columns: repeat(3, var(--cell-size));
-            grid-template-rows: repeat(3, var(--cell-size));
-            gap: 8px;
-            margin: 0 auto 2rem;
-            position: relative;
-        }
-        .cell {
-            background: var(--secondary);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: calc(var(--cell-size) * .45);
-            cursor: pointer;
-            transition: var(--transition);
-            user-select: none;
-        }
-        .cell:hover { background: #334155; }
-        .cell.x { color: var(--accent); }
-        .cell.o { color: var(--win); }
-        .cell.disabled { pointer-events: none; }
-        #score {
-            display: flex;
-            justify-content: space-evenly;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            font-size: 1rem;
-        }
-        .score-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: .25rem;
-            color: var(--subtle);
-        }
-        .score-item span:last-child {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text);
-        }
-        button {
-            display: block;
-            margin: 0 auto;
-            padding: .75rem 2rem;
-            border: none;
-            border-radius: 999px;
-            background: var(--accent);
-            color: #fff;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        button:hover { background: #0284c7; transform: translateY(-2px); }
-        button:active { transform: translateY(0); }
-        .win-line {
-            position: absolute;
-            background: var(--win);
-            border-radius: 4px;
-            transition: var(--transition);
-            opacity: 0;
-        }
-        .win-line.show { opacity: 1; }
-        @media (max-width: 400px) {
-            #board {
-                grid-template-columns: repeat(3, min(20vw, 80px));
-                grid-template-rows: repeat(3, min(20vw, 80px));
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic-Tac-Toe AI</title>
+  <style>
+    :root {
+      --primary: #0f172a;
+      --secondary: #1e293b;
+      --accent: #0ea5e9;
+      --win: #10b981;
+      --lose: #ef4444;
+      --draw: #f59e0b;
+      --text: #e2e8f0;
+      --subtle: #64748b;
+      --cell-size: min(25vw, 120px);
+      --transition: all .3s cubic-bezier(.4,0,.2,1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+      display: grid;
+      place-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: var(--text);
+      padding: 2rem;
+      position: relative;
+    }
+
+    h1 {
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 1rem;
+      letter-spacing: .05em;
+    }
+
+    #status {
+      text-align: center;
+      font-size: 1.125rem;
+      min-height: 1.5em;
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, var(--cell-size));
+      grid-template-rows: repeat(3, var(--cell-size));
+      gap: 8px;
+      margin: 0 auto 2rem;
+      position: relative;
+    }
+
+    .cell {
+      background: var(--secondary);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--cell-size) * .45);
+      cursor: pointer;
+      transition: var(--transition);
+      user-select: none;
+    }
+
+    .cell:hover {
+      background: #334155;
+    }
+
+    .cell.x {
+      color: var(--accent);
+    }
+
+    .cell.o {
+      color: var(--win);
+    }
+
+    .cell.disabled {
+      pointer-events: none;
+    }
+
+    #score {
+      display: flex;
+      justify-content: space-evenly;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+    }
+
+    .score-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .25rem;
+      color: var(--subtle);
+    }
+
+    .score-item span:last-child {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    button {
+      display: block;
+      margin: 0 auto;
+      padding: .75rem 2rem;
+      border: none;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    button:hover {
+      background: #0284c7;
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .win-line {
+      position: absolute;
+      background: var(--win);
+      border-radius: 4px;
+      transition: var(--transition);
+      opacity: 0;
+    }
+
+    .win-line.show {
+      opacity: 1;
+    }
+
+    .hf-link {
+      position: fixed;
+      bottom: 15px;
+      left: 15px;
+      background: rgba(14, 165, 233, 0.15);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--accent);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .hf-link:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    @media (max-width: 400px) {
+      #board {
+        grid-template-columns: repeat(3, 80px);
+        grid-template-rows: repeat(3, 80px);
+      }
+    }
+
+    .bet-btn {
+      background: var(--win);
+      margin-top: 1rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+  <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+  <script type="module">
+    import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
+    // Wait for DOM, then ready()
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Access user context
+      const { user } = await sdk.getContext();
+      console.log(`Welcome, ${user.displayName || user.username}! FID: ${user.fid}`);
+      // Optional: Personalize status
+      if (user.pfpUrl) {
+        // Could load PFP as avatar, but keep simple
+      }
+      // Enable haptics if supported
+      const features = await sdk.getFeatures();
+      if (features.haptics) {
+        // Use in endGame() for vibes
+      }
+      sdk.actions.ready();  // Hides splash; call ASAP after init
+      await initWallet();
+    });
+  </script>
 </head>
 <body>
-    <h1>Tic-Tac-Toe vs AI</h1>
-    <div id="status">Your turn (X)</div>
-    <div id="board">
-        <div class="cell" data-index="0"></div>
-        <div class="cell" data-index="1"></div>
-        <div class="cell" data-index="2"></div>
-        <div class="cell" data-index="3"></div>
-        <div class="cell" data-index="4"></div>
-        <div class="cell" data-index="5"></div>
-        <div class="cell" data-index="6"></div>
-        <div class="cell" data-index="7"></div>
-        <div class="cell" data-index="8"></div>
-        <div class="win-line"></div>
+  <h1>Tic-Tac-Toe vs AI</h1>
+  <div id="status">Your turn (X)</div>
+  <div id="board">
+    <div class="cell" data-index="0"></div>
+    <div class="cell" data-index="1"></div>
+    <div class="cell" data-index="2"></div>
+    <div class="cell" data-index="3"></div>
+    <div class="cell" data-index="4"></div>
+    <div class="cell" data-index="5"></div>
+    <div class="cell" data-index="6"></div>
+    <div class="cell" data-index="7"></div>
+    <div class="cell" data-index="8"></div>
+    <div class="win-line"></div>
+  </div>
+  <div id="score">
+    <div class="score-item">
+      <span>You</span>
+      <span id="playerScore">0</span>
     </div>
-    <div id="score">
-        <div class="score-item">
-            <span>You</span>
-            <span id="playerScore">0</span>
-        </div>
-        <div class="score-item">
-            <span>Draws</span>
-            <span id="drawScore">0</span>
-        </div>
-        <div class="score-item">
-            <span>Bot</span>
-            <span id="botScore">0</span>
-        </div>
+    <div class="score-item">
+      <span>Draws</span>
+      <span id="drawScore">0</span>
     </div>
-    <button onclick="restartGame()">Restart Game</button>
-    <script>
-        (function () {
-            const cells = document.querySelectorAll('.cell');
-           цями
+    <div class="score-item">
+      <span>Bot</span>
+      <span id="botScore">0</span>
+    </div>
+  </div>
+  <button onclick="restartGame()">Restart Game</button>
+  <button id="betButton" class="bet-btn hidden" onclick="placeBet()">Bet 0.001 ETH</button>
+  <!-- Hugging Face link -->
+  <a href="https://huggingface.co/spaces/sudo-saidso/tic-tac-toe" target="_blank" class="hf-link"> 🤖 on HuggingFace </a>
+  <script>
+    const cells = document.querySelectorAll('.cell');
+    const statusEl = document.getElementById('status');
+    const winLine = document.querySelector('.win-line');
+    let board = Array(9).fill(null);
+    let gameOver = false;
+    let scores = { player: 0, draw: 0, bot: 0 };
+    const winPatterns = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ];
+    cells.forEach(c => c.addEventListener('click', handlePlayerMove));
 
-System: const statusEl = document.getElementById('status');
-            const winLine = document.querySelector('.win-line');
-            const boardEl = document.getElementById('board');
-            let board = Array(9).fill(null);
-            let gameOver = false;
-            let scores = { player: 0, draw: 0, bot: 0 };
-            const winPatterns = [
-                [0, 1, 2], [3, 4, 5], [6, 7, 8],
-                [0, 3, 6], [1, 4, 7], [2, 5, 8],
-                [0, 4, 8], [2, 4, 6]
-            ];
+    // Global vars for wallet
+    let provider;
+    let userAddress;
+    let features; // Assuming features is global or passed
 
-            function initializeGame() {
-                cells.forEach(c => {
-                    c.addEventListener('click', handlePlayerMove);
-                    c.setAttribute('tabindex', '0');
-                    c.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            handlePlayerMove(e);
-                        }
-                    });
-                });
-            }
+    async function initWallet() {
+      provider = sdk.wallet.getEthereumProvider();
+      if (!provider) {
+        console.log('Wallet not supported');  // Fallback: Hide bet UI
+        return;
+      }
+      try {
+        const accounts = await provider.request({ method: 'eth_requestAccounts' });
+        userAddress = accounts[0];
+        console.log(`Wallet connected: ${userAddress}`);
+        // Update UI: Show bet button if address
+        document.getElementById('betButton')?.classList.remove('hidden');
+      } catch (err) {
+        console.error('Wallet connect failed:', err);
+      }
+    }
 
-            function handlePlayerMove(e) {
-                const idx = e.target.dataset.index;
-                if (board[idx] || gameOver) return;
-                makeMove(idx, 'x');
-                if (!gameOver) {
-                    statusEl.textContent = 'Bot is thinking...';
-                    setTimeout(() => makeMove(bestMove(), 'o'), 400);
-                }
-            }
+    async function placeBet(amount = '0.001') {  // In ETH; use wei in prod
+      if (!provider || !userAddress) return;
+      try {
+        const params = [{
+          from: userAddress,
+          to: '0xYourGameContract',  // Deploy a simple contract for escrow/refund
+          value: ethers.utils.parseEther(amount).toHexString(),  // Need ethers.js via CDN
+          data: '0x',  // Or encode bet (e.g., game ID)
+        }];
+        const txHash = await provider.request({ method: 'eth_sendTransaction', params });
+        console.log('Bet placed:', txHash);
+        // Haptic success
+        if (features.haptics) sdk.actions.hapticFeedback({ type: 'success' });
+        // On win: Refund + bonus via contract
+      } catch (err) {
+        console.error('Bet failed:', err);
+      }
+    }
 
-            function makeMove(idx, player) {
-                board[idx] = player;
-                cells[idx].textContent = player === 'x' ? 'X' : 'O';
-                cells[idx].classList.add(player, 'disabled');
-                const winner = checkWinner();
-                if (winner) endGame(winner);
-                else if (board.every(Boolean)) endGame('draw');
-                else statusEl.textContent = 'Your turn (X)';
-            }
+    function handlePlayerMove(e) {
+      const idx = e.target.dataset.index;
+      if (board[idx] || gameOver) return;
+      makeMove(idx, 'x');
+      if (!gameOver) {
+        statusEl.textContent = 'Bot is thinking...';
+        setTimeout(() => makeMove(bestMove(), 'o'), 400);
+      }
+    }
 
-            function checkWinner(b = board) {
-                for (const [a, bIdx, c] of winPatterns) {
-                    if (b[a] && b[a] === b[bIdx] && b[a] === b[c]) return b[a];
-                }
-                return null;
-            }
+    function makeMove(idx, player) {
+      board[idx] = player;
+      cells[idx].textContent = player === 'x' ? 'X' : 'O';
+      cells[idx].classList.add(player, 'disabled');
+      const winner = checkWinner();
+      if (winner) endGame(winner);
+      else if (board.every(Boolean)) endGame('draw');
+      else statusEl.textContent = 'Your turn (X)';
+    }
 
-            function endGame(result) {
-                gameOver = true;
-                cells.forEach(c => c.classList.add('disabled'));
-                let winningPattern = null;
-                if (result !== 'draw') {
-                    for (const pattern of winPatterns) {
-                        const [a, b, c] = pattern;
-                        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-                            winningPattern = pattern;
-                            break;
-                        }
-                    }
-                    if (winningPattern) drawWinLine(winningPattern);
-                }
-                if (result === 'draw') {
-                    statusEl.textContent = "It's a draw!";
-                    scores.draw++;
-                    document.getElementById('drawScore').textContent = scores.draw;
-                } else {
-                    if (result === 'x') {
-                        statusEl.textContent = 'You win!';
-                        scores.player++;
-                        document.getElementById('playerScore').textContent = scores.player;
-                    } else {
-                        statusEl.textContent = 'Bot wins!';
-                        scores.bot++;
-                        document.getElementById('botScore').textContent = scores.bot;
-                    }
-                }
-            }
+    function checkWinner(b = board) {
+      for (const [a, bIdx, c] of winPatterns) {
+        if (b[a] && b[a] === b[bIdx] && b[a] === b[c]) return b[a];
+      }
+      return null;
+    }
 
-            function drawWinLine([a, b, c]) {
-                winLine.classList.add('show');
-                const boardRect = boardEl.getBoundingClientRect();
-                const cell0Rect = cells[a].getBoundingClientRect();
-                const cell2Rect = cells[c].getBoundingClientRect();
-                if (a === 0 && c === 2) { // First row
-                    winLine.style.width = '100%';
-                    winLine.style.height = '4px';
-                    winLine.style.top = `${cell0Rect.top + cell0Rect.height / 2 - boardRect.top}px`;
-                    winLine.style.left = '0';
-                } else if (a === 3 && c === 5) { // Second row
-                    winLine.style.width = '100%';
-                    winLine.style.height = '4px';
-                    winLine.style.top = `${cell0Rect.top + cell0Rect.height / 2 - boardRect.top}px`;
-                    winLine.style.left = '0';
-                } else if (a === 6 && c === 8) { // Third row
-                    winLine.style.width = '100%';
-                    winLine.style.height = '4px';
-                    winLine.style.top = `${cell0Rect.top + cell0Rect.height / 2 - boardRect.top}px`;
-                    winLine.style.left = '0';
-                } else if (a === 0 && c === 6) { // First column
-                    winLine.style.height = '100%';
-                    winLine.style.width = '4px';
-                    winLine.style.left = `${cell0Rect.left + cell0Rect.width / 2 - boardRect.left}px`;
-                    winLine.style.top = '0';
-                } else if (a === 1 && c === 7) { // Second column
-                    winLine.style.height = '100%';
-                    winLine.style.width = '4px';
-                    winLine.style.left = `${cell0Rect.left + cell0Rect.width / 2 - boardRect.left}px`;
-                    winLine.style.top = '0';
-                } else if (a === 2 && c === 8) { // Third column
-                    winLine.style.height = '100%';
-                    winLine.style.width = '4px';
-                    winLine.style.left = `${cell0Rect.left + cell0Rect.width / 2 - boardRect.left}px`;
-                    winLine.style.top = '0';
-                } else if (a === 0 && c === 8) { // Main diagonal
-                    winLine.style.width = `${Math.sqrt(2) * boardRect.width}px`;
-                    winLine.style.height = '4px';
-                    winLine.style.transform = 'rotate(45deg)';
-                    winLine.style.left = '0';
-                    winLine.style.top = `${boardRect.height / 2}px`;
-                } else if (a === 2 && c === 6) { // Anti-diagonal
-                    winLine.style.width = `${Math.sqrt(2) * boardRect.width}px`;
-                    winLine.style.height = '4px';
-                    winLine.style.transform = 'rotate(-45deg)';
-                    winLine.style.left = '0';
-                    winLine.style.top = `${boardRect.height / 2}px`;
-                }
-            }
+    function endGame(result) {
+      gameOver = true;
+      cells.forEach(c => c.classList.add('disabled'));
+      if (result === 'draw') {
+        statusEl.textContent = 'It\'s a draw!';
+        scores.draw++;
+        document.getElementById('drawScore').textContent = scores.draw;
+      } else {
+        if (result === 'x') {
+          statusEl.textContent = 'You win!';
+          scores.player++;
+          document.getElementById('playerScore').textContent = scores.player;
+        } else {
+          statusEl.textContent = 'Bot wins!';
+          scores.bot++;
+          document.getElementById('botScore').textContent = scores.bot;
+        }
+      }
+      if (features.haptics) {
+        sdk.actions.hapticFeedback({ type: result === 'draw' ? 'light' : result === 'x' ? 'success' : 'failure' });
+      }
+    }
 
-            function bestMove() {
-                return minimax(board, 'o').index;
-            }
+    function bestMove() {
+      return minimax(board, 'o').index;
+    }
 
-            function minimax(newBoard, player) {
-                const availSpots = newBoard.map((v, i) => v === null ? i : null).filter(v => v !== null);
-                if (checkWinner(newBoard) === 'x') return { score: -10 };
-                if (checkWinner(newBoard) === 'o') return { score: 10 };
-                if (availSpots.length === 0) return { score: 0 };
-                const moves = [];
-                for (let i = 0; i < availSpots.length; i++) {
-                    const move = {};
-                    move.index = availSpots[i];
-                    newBoard[availSpots[i]] = player;
-                    move.score = (player === 'o')
-                        ? minimax(newBoard, 'x').score
-                        : minimax(newBoard, 'o').score;
-                    newBoard[availSpots[i]] = null;
-                    moves.push(move);
-                }
-                let bestMove;
-                if (player === 'o') {
-                    let bestScore = -Infinity;
-                    for (let i = 0; i < moves.length; i++) {
-                        if (moves[i].score > bestScore) {
-                            bestScore = moves[i].score;
-                            bestMove = i;
-                        }
-                    }
-                } else {
-                    let bestScore = Infinity;
-                    for (let i = 0; i < moves.length; i++) {
-                        if (moves[i].score < bestScore) {
-                            bestScore = moves[i].score;
-                            bestMove = i;
-                        }
-                    }
-                }
-                return moves[bestMove];
-            }
+    function minimax(newBoard, player) {
+      const availSpots = newBoard.map((v, i) => v === null ? i : null).filter(v => v !== null);
+      if (checkWinner(newBoard) === 'x') return { score: -10 };
+      if (checkWinner(newBoard) === 'o') return { score: 10 };
+      if (availSpots.length === 0) return { score: 0 };
+      const moves = [];
+      for (let i = 0; i < availSpots.length; i++) {
+        const move = {};
+        move.index = availSpots[i];
+        newBoard[availSpots[i]] = player;
+        move.score = (player === 'o') ? minimax(newBoard, 'x').score : minimax(newBoard, 'o').score;
+        newBoard[availSpots[i]] = null;
+        moves.push(move);
+      }
+      let bestMove;
+      if (player === 'o') {
+        let bestScore = -Infinity;
+        for (let i = 0; i < moves.length; i++) {
+          if (moves[i].score > bestScore) {
+            bestScore = moves[i].score;
+            bestMove = i;
+          }
+        }
+      } else {
+        let bestScore = Infinity;
+        for (let i = 0; i < moves.length; i++) {
+          if (moves[i].score < bestScore) {
+            bestScore = moves[i].score;
+            bestMove = i;
+          }
+        }
+      }
+      return moves[bestMove];
+    }
 
-            function restartGame() {
-                board = Array(9).fill(null);
-                gameOver = false;
-                cells.forEach(c => {
-                    c.textContent = '';
-                    c.className = 'cell';
-                    c.setAttribute('tabindex', '0');
-                });
-                winLine.className = 'win-line';
-                statusEl.textContent = 'Your turn (X)';
-            }
-
-            initializeGame();
-        })();
-    </script>
+    function restartGame() {
+      board = Array(9).fill(null);
+      gameOver = false;
+      cells.forEach(c => {
+        c.textContent = '';
+        c.className = 'cell';
+      });
+      winLine.className = 'win-line';
+      statusEl.textContent = 'Your turn (X)';
+    }
+  </script>
 </body>
 </html>
