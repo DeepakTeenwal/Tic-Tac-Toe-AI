@@ -7,7 +7,6 @@
     <title>Tic-Tac-Toe AI</title>
 
   <!-- **ACTION REQUIRED**: Replace the href with the URL of your actual app logo (e.g., a 64x64 transparent PNG). -->
-  <link rel="icon" type="image/png" href="https://assets-global.website-files.com/64b589417d470659a8508e6e/65f97cc1c34a2608c704259b_celo.png">
   <!-- *** END: ADDED METADATA *** -->
     
     <style>
@@ -176,17 +175,15 @@
     sdk.actions.ready({ disableNativeGestures: true });
   </script>
 
-  <!-- Wagmi + Celo Logic -->
+  <!-- Wagmi -->
   <script type="module">
     import {
       createConfig,
       connect,
-      writeContract,
-      readContract,
       http,
       waitForTransactionReceipt
     } from 'https://esm.sh/@wagmi/core';
-    import { celo } from 'https://esm.sh/@wagmi/core/chains';
+    import { base } from 'https://esm.sh/@wagmi/core/chains';
     import { farcasterMiniApp } from 'https://esm.sh/@farcaster/miniapp-wagmi-connector';
     import { parseEther } from 'https://esm.sh/viem';
 
