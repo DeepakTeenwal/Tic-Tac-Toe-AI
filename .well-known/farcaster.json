@@ -2,12 +2,12 @@
   "frame": {
     "name": "tic tac toe AI",
     "version": "1",
-    "iconUrl": "https://tic-tac-toe-ai-tau.vercel.app/icon.png",
-    "homeUrl": "https://tic-tac-toe-ai-tau.vercel.app",
-    "imageUrl": "https://tic-tac-toe-ai-tau.vercel.app/image.png",
-    "splashImageUrl": "https://tic-tac-toe-ai-tau.vercel.app/splash.png",
+    "iconUrl": "https://tic-tac-toe-ai-lac.vercel.app/icon.png",
+    "homeUrl": "https://tic-tac-toe-ai-lac.vercel.app",
+    "imageUrl": "https://tic-tac-toe-ai-lac.vercel.app/image.png",
+    "splashImageUrl": "https://tic-tac-toe-ai-lac.vercel.app/splash.png",
     "splashBackgroundColor": "#1B1B1E",
-    "webhookUrl": "https://tic-tac-toe-ai-tau.vercel.app/api/webhook",
+    "webhookUrl": "https://tic-tac-toe-ai-lac.vercel.app/api/webhook",
     "subtitle": "Unbeatable AI Tic-Tac-Toe Game",
     "description": "Play classic Tic-Tac-Toe against an unbeatable AI using Minimax. Fast gameplay, human vs computer, desktop and mobile support, no setup needed.",
     "primaryCategory": "games"
