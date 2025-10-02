@@ -343,12 +343,6 @@
         const provider = sdk.wallet.getEthereumProvider();
         if (!provider) {
           throw new Error('Wallet provider not available');
-           }
-
-            // 👇 Add shim here if .request is missing
-             if (typeof provider.request !== "function") {
-             provider.request = ({ method, params }) =>
-             provider.send(method, params || []);
         }
         const accounts = await provider.request({ method: 'eth_requestAccounts' });
         userAddress = accounts[0];
