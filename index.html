@@ -344,11 +344,6 @@
         if (!provider) {
           throw new Error('Wallet provider not available');
         }
-        // ✅ Wrap with ethers.js
-    const provider = new ethers.BrowserProvider(rawProvider);
-    const signer = await provider.getSigner();
-    userAddress = await signer.getAddress();
-        
         const accounts = await provider.request({ method: 'eth_requestAccounts' });
         userAddress = accounts[0];
         console.log(`Wallet connected: ${userAddress}`);
