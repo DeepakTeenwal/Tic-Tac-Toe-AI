@@ -12,9 +12,10 @@
     "description": "Play classic Tic-Tac-Toe against an unbeatable AI using Minimax. Fast gameplay, human vs computer, desktop and mobile support, no setup needed.",
     "primaryCategory": "games"
   },
+  {
   "accountAssociation": {
-    "header": "eyJmaWQiOjYxMjA2NiwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDE4MjhjNEJmNzhEQWI2NkI0QjdkZUJmYUEzOEYwQWQxMjVFYzhkMTUifQ",
-    "payload": "eyJkb21haW4iOiJ0aWMtdGFjLXRvZS00eDQudmVyY2VsLmFwcCJ9",
-    "signature": "97Wd1ZC3WS6gSm1AlZ6XRyWLc1d0NYyxgjvjAwWKE093pFeEQK2HsOdFZKjAXksraFbD6o6Y9UBZJFgCO/Km+Rs="
+    "header": "eyJmaWQiOjE4MzAxLCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4QTIzMjRiZmY0NTE0QkVmMTA5RmY5ZGNDZTg0ZTA2RDg3MjI2NzNGYyJ9",
+    "payload": "eyJkb21haW4iOiJ0aWMtdGFjLXRvZS1haS1sYWMudmVyY2VsLmFwcCJ9",
+    "signature": "MHg4MmU2MGNlZjBjZjBhMTlhNDU1MzhiMjllZDExZjA0ZDJiNTBjYzVjOWViMzg3MzVhOGQyYTE4NWFkOTc5MGRlMDcwZGYwOTYwMGE0NDZkZDEwNmYyYjk2ZDk4ZWYxYTgzZjE0MGIyZmRkMGU5YTJmOTIzMDgyYjI1ZDA0OWVkYjFj"
   }
 }
