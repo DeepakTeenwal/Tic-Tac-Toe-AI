@@ -11,5 +11,10 @@
     "subtitle": "Unbeatable AI Tic-Tac-Toe Game",
     "description": "Play classic Tic-Tac-Toe against an unbeatable AI using Minimax. Fast gameplay, human vs computer, desktop and mobile support, no setup needed.",
     "primaryCategory": "games"
+  },
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
   }
 }
