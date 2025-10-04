@@ -319,8 +319,13 @@
         const context = await window.sdk.getContext();
         currentUser = context.user;
         
-        statusEl.textContent = `Welcome ${currentUser.displayName || currentUser.username}! Your turn (X)`;
-        console.log(`User FID: ${currentUser.fid}`);
+        if (currentUser) {
+          statusEl.textContent = `Welcome ${currentUser.displayName || currentUser.username}! Your turn (X)`;
+          console.log(`User FID: ${currentUser.fid}`);
+        } else {
+          statusEl.textContent = 'Your turn (X)';
+          console.log('User context not available');
+        }
 
         // Check capabilities
         const capabilities = await window.sdk.getCapabilities();
@@ -336,7 +341,8 @@
 
       } catch (err) {
         console.error('SDK initialization failed:', err);
-        statusEl.textContent = 'Error loading app. Try refreshing.';
+        statusEl.textContent = 'Your turn (X)'; // Fallback message
+        console.log('Continuing without full SDK features');
       }
     });
 
@@ -405,7 +411,14 @@
     // Invite friend to play
     async function inviteFriend() {
       try {
-        const shareUrl = `${window.location.origin}?mode=friend&invite=${currentUser.fid}`;
+        // Ensure we have user context
+        if (!currentUser) {
+          const context = await window.sdk.getContext();
+          currentUser = context.user;
+        }
+
+        const userFid = currentUser?.fid || 'unknown';
+        const shareUrl = `${window.location.origin}?mode=friend&invite=${userFid}`;
         
         // Use SDK to post a cast inviting a friend
         await window.sdk.actions.post({
@@ -525,16 +538,23 @@
       }
 
       // Share result
-      const shareUrl = `${window.location.origin}?result=${result}&mode=${gameMode}`;
-      const resultText = result === 'draw' ? 'Draw!' : 
-                        result === 'x' ? 'Player X won!' : 'Player O won!';
-      
       try {
+        // Ensure we have user context
+        if (!currentUser) {
+          const context = await window.sdk.getContext();
+          currentUser = context.user;
+        }
+
+        const shareUrl = `${window.location.origin}?result=${result}&mode=${gameMode}`;
+        const resultText = result === 'draw' ? 'Draw!' : 
+                          result === 'x' ? 'Player X won!' : 'Player O won!';
+        
         await window.sdk.actions.post({
           text: `Tic-Tac-Toe ${gameMode === 'ai' ? 'vs AI' : 'with Friend'}: ${resultText}\nPlay me: ${shareUrl}`,
         });
       } catch (err) {
         console.error('Failed to post result:', err);
+        // Don't show error to user, just log it
       }
     }
 
