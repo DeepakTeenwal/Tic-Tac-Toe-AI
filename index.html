@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tic-Tac-Toe AI</title>
-    <!-- Farcaster Mini App Metadata, (Simplified for demonstration) -->
+  <title>Tic-Tac-Toe - Multiplayer</title>
+  <!-- Farcaster Mini App Metadata -->
   <meta name="fc:miniapp" content='{
       "version":"1",
       "imageUrl":"https://tic-tac-toe-ai-lac.vercel.app/image.png",
       "button":{
-        "title":"Tic-Tac-Toe AI",
+        "title":"Play Tic-Tac-Toe",
         "action":{
           "type":"launch_frame",
           "name":"LAUNCH",
@@ -127,7 +127,7 @@
 
     button {
       display: block;
-      margin: 0 auto;
+      margin: 0 auto 0.5rem;
       padding: .75rem 2rem;
       border: none;
       border-radius: 999px;
@@ -159,34 +159,33 @@
       opacity: 1;
     }
 
-    .hf-link {
-      position: fixed;
-      bottom: 15px;
-      left: 15px;
-      background: rgba(14, 165, 233, 0.15);
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      color: var(--accent);
-      text-decoration: none;
-      transition: var(--transition);
-    }
-
-    .hf-link:hover {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .connect-btn, .bet-btn {
-      background: var(--win);
-      margin: 1rem auto;
-      width: fit-content;
-      padding: .5rem 1.5rem;
-      font-size: 0.9rem;
-    }
-
     .connect-btn {
       background: var(--lose);
+    }
+
+    .invite-btn {
+      background: #8b5cf6;
+    }
+
+    .add-favorite-btn {
+      background: var(--draw);
+    }
+
+    .mode-selector {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .mode-btn {
+      padding: .5rem 1.5rem;
+      font-size: 0.9rem;
+      background: var(--secondary);
+    }
+
+    .mode-btn.active {
+      background: var(--accent);
     }
 
     @media (max-width: 400px) {
@@ -194,19 +193,21 @@
         grid-template-columns: repeat(3, 80px);
         grid-template-rows: repeat(3, 80px);
       }
-      button, .connect-btn, .bet-btn {
+      button {
         padding: .5rem 1.5rem;
         font-size: 0.8rem;
       }
     }
   </style>
-  <!-- Farcaster SDK and Viem/Wagmi Imports (UPDATED) -->
+  
+  <!-- Farcaster SDK -->
   <script type="module">
-    // Farcaster SDK initialization
     import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
-    sdk.actions.ready({ disableNativeGestures: true });
+    window.sdk = sdk;
+  </script>
 
-    // --- WAGMI / VIEM IMPORTS ---
+  <!-- Wagmi/Viem -->
+  <script type="module">
     import {
       createConfig,
       connect,
@@ -220,68 +221,40 @@
     } from 'https://esm.sh/@wagmi/core';
     import { farcasterMiniApp } from 'https://esm.sh/@farcaster/miniapp-wagmi-connector';
     import { parseEther } from 'https://esm.sh/viem';
+    import { base } from 'https://esm.sh/wagmi/chains';
 
+    // Create Wagmi config
+    const config = createConfig({
+      chains: [base],
+      transports: {
+        [base.id]: http(),
+      },
+      connectors: [farcasterMiniApp()]
+    });
+
+    window.WAGMI_CONFIG = config;
     window.WAGMI_CORE = {
-      createConfig,
       connect,
       writeContract,
       readContract,
       getAccount,
       getChainId,
       switchChain,
-      http,
       waitForTransactionReceipt
     };
-    window.FARCASTER_WAGMI = {
-      farcasterMiniApp
-    };
-    window.VIEM = {
-      parseEther
-    };
-    window.sdk = sdk; // Make sdk available globally for the second script block
-  </script>
-  <!-- Game logic script block (ORIGINAL) -->
-  <script type="module">
-    // Import SDK from global scope set above
-    const sdk = window.sdk;
-
-    window.addEventListener('DOMContentLoaded', async () => {
-      try {
-        // Call ready() early to hide splash screen
-        // Note: The sdk.actions.ready() with disableNativeGestures: true is already called above.
-        // We ensure a simple ready call here just in case, but rely on the one above for configuration.
-        await sdk.actions.ready();
-
-        // Initialize user context
-        const { user } = await sdk.getContext();
-        document.getElementById('status').textContent = `Your turn (X), ${user.displayName || user.username}!`;
-        console.log(`User FID: ${user.fid}`);
-
-        // Check capabilities
-        const capabilities = await sdk.getCapabilities();
-        features = await sdk.getFeatures();
-        if (!capabilities.wallet) {
-          console.log('Wallet not supported in this client');
-          document.getElementById('status').textContent = 'Wallet not supported. Play without authentication.';
-          document.getElementById('connectButton').style.display = 'block';
-          document.getElementById('betButton').style.display = 'none';
-          return;
-        }
-
-        // Initialize wallet
-        await initWallet();
-      } catch (err) {
-        console.error('SDK initialization failed:', err.message);
-        document.getElementById('status').textContent = 'Error loading app. Try refreshing.';
-        document.getElementById('connectButton').style.display = 'block';
-        document.getElementById('betButton').style.display = 'none';
-      }
-    });
+    window.VIEM = { parseEther };
   </script>
 </head>
 <body>
-  <h1>Tic-Tac-Toe vs AI</h1>
+  <h1>Tic-Tac-Toe</h1>
+  
+  <div class="mode-selector">
+    <button class="mode-btn active" onclick="setGameMode('ai')">vs AI</button>
+    <button class="mode-btn" onclick="setGameMode('friend')">vs Friend</button>
+  </div>
+
   <div id="status">Your turn (X)</div>
+  
   <div id="board">
     <div class="cell" data-index="0"></div>
     <div class="cell" data-index="1"></div>
@@ -294,6 +267,7 @@
     <div class="cell" data-index="8"></div>
     <div class="win-line"></div>
   </div>
+
   <div id="score">
     <div class="score-item">
       <span>You</span>
@@ -304,13 +278,16 @@
       <span id="drawScore">0</span>
     </div>
     <div class="score-item">
-      <span>Bot</span>
+      <span id="opponentLabel">Bot</span>
       <span id="botScore">0</span>
     </div>
   </div>
+
   <button onclick="restartGame()">Restart Game</button>
-  <button id="connectButton" class="connect-btn" onclick="initWallet()">Connect Wallet</button>
-  <button id="betButton" class="bet-btn" style="display: none;" onclick="placeBet()">Authenticate to Play</button>
+  <button id="connectButton" class="connect-btn" onclick="connectWallet()">Connect Wallet</button>
+  <button id="inviteButton" class="invite-btn" style="display: none;" onclick="inviteFriend()">Invite Friend to Play</button>
+  <button id="addFavoriteButton" class="add-favorite-btn" onclick="addToFavorites()">Add to Favorites</button>
+
   <script>
     let cells = document.querySelectorAll('.cell');
     let statusEl = document.getElementById('status');
@@ -318,8 +295,13 @@
     let board = Array(9).fill(null);
     let gameOver = false;
     let scores = { player: 0, draw: 0, bot: 0 };
-    let userAddress;
-    let features;
+    let userAddress = null;
+    let isConnected = false;
+    let currentUser = null;
+    let gameMode = 'ai'; // 'ai' or 'friend'
+    let currentPlayer = 'x';
+    let features = null;
+
     const winPatterns = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8],
       [0, 3, 6], [1, 4, 7], [2, 5, 8],
@@ -328,54 +310,167 @@
 
     cells.forEach(c => c.addEventListener('click', handlePlayerMove));
 
-    // Note: The original initWallet used sdk.wallet.getEthereumProvider().
-    // You now have Wagmi/Viem available via module imports (window.WAGMI_CORE, etc.),
-    // but the existing logic is simpler and uses the Farcaster SDK directly,
-    // which is often sufficient for basic wallet authentication in a Mini App.
-    // I'm keeping the original logic for simplicity, but you can switch to Wagmi
-    // later if you need more complex contract interactions.
-
-    async function initWallet() {
+    // Initialize the app
+    window.addEventListener('DOMContentLoaded', async () => {
       try {
-        // You would use window.WAGMI_CORE.createConfig and connect here
-        // if fully implementing Wagmi, but for basic connection,
-        // using the SDK provider is fast and reliable.
-        const provider = sdk.wallet.getEthereumProvider();
-        if (!provider) {
-          throw new Error('Wallet provider not available');
+        await window.sdk.actions.ready({ disableNativeGestures: true });
+
+        // Get user context
+        const context = await window.sdk.getContext();
+        currentUser = context.user;
+        
+        statusEl.textContent = `Welcome ${currentUser.displayName || currentUser.username}! Your turn (X)`;
+        console.log(`User FID: ${currentUser.fid}`);
+
+        // Check capabilities
+        const capabilities = await window.sdk.getCapabilities();
+        features = await window.sdk.getFeatures();
+        
+        if (!capabilities.wallet) {
+          console.log('Wallet not supported in this client');
+          document.getElementById('connectButton').style.display = 'none';
         }
-        const accounts = await provider.request({ method: 'eth_requestAccounts' });
-        userAddress = accounts[0];
-        console.log(`Wallet connected: ${userAddress}`);
-        statusEl.textContent = `Your turn (X) - Wallet: ${userAddress.slice(0, 6)}...`;
-        document.getElementById('connectButton').style.display = 'none';
-        document.getElementById('betButton').style.display = 'block';
+
+        // Auto-connect wallet if available
+        await checkWalletConnection();
+
       } catch (err) {
-        console.error('Wallet authentication failed:', err.message);
-        statusEl.textContent = `Wallet connect failed: ${err.message}. Try again.`;
-        document.getElementById('connectButton').style.display = 'block';
-        document.getElementById('betButton').style.display = 'none';
+        console.error('SDK initialization failed:', err);
+        statusEl.textContent = 'Error loading app. Try refreshing.';
+      }
+    });
+
+    // Check if wallet is already connected
+    async function checkWalletConnection() {
+      try {
+        const account = window.WAGMI_CORE.getAccount(window.WAGMI_CONFIG);
+        if (account && account.isConnected) {
+          userAddress = account.address;
+          isConnected = true;
+          updateConnectionStatus();
+        }
+      } catch (err) {
+        console.log('Wallet not auto-connected');
       }
     }
 
-    async function placeBet() {
-      if (!userAddress) {
-        statusEl.textContent = 'Please connect wallet first!';
-        return;
+    // Connect wallet using Wagmi
+    async function connectWallet() {
+      try {
+        statusEl.textContent = 'Connecting wallet...';
+        
+        const result = await window.WAGMI_CORE.connect(window.WAGMI_CONFIG, {
+          connector: window.WAGMI_CONFIG.connectors[0]
+        });
+
+        userAddress = result.accounts[0];
+        isConnected = true;
+        
+        if (features?.haptics) {
+          await window.sdk.actions.hapticFeedback({ type: 'success' });
+        }
+
+        updateConnectionStatus();
+        statusEl.textContent = `Wallet connected! Your turn (X)`;
+        
+      } catch (err) {
+        console.error('Wallet connection failed:', err);
+        statusEl.textContent = `Connection failed: ${err.message}`;
+        
+        if (features?.haptics) {
+          await window.sdk.actions.hapticFeedback({ type: 'failure' });
+        }
       }
-      statusEl.textContent = 'Authenticated! Your turn (X)';
-      if (features?.haptics) {
-        sdk.actions.hapticFeedback({ type: 'success' });
+    }
+
+    function updateConnectionStatus() {
+      if (isConnected && userAddress) {
+        document.getElementById('connectButton').style.display = 'none';
+        document.getElementById('inviteButton').style.display = 'block';
+      }
+    }
+
+    // Set game mode
+    function setGameMode(mode) {
+      gameMode = mode;
+      document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      const opponentLabel = document.getElementById('opponentLabel');
+      opponentLabel.textContent = mode === 'ai' ? 'Bot' : 'Friend';
+      
+      restartGame();
+    }
+
+    // Invite friend to play
+    async function inviteFriend() {
+      try {
+        const shareUrl = `${window.location.origin}?mode=friend&invite=${currentUser.fid}`;
+        
+        // Use SDK to post a cast inviting a friend
+        await window.sdk.actions.post({
+          text: `Challenge me to Tic-Tac-Toe! 🎮\n\nPlay here: ${shareUrl}`,
+        });
+
+        if (features?.haptics) {
+          await window.sdk.actions.hapticFeedback({ type: 'success' });
+        }
+
+        statusEl.textContent = 'Invitation sent! Waiting for friend...';
+      } catch (err) {
+        console.error('Failed to send invitation:', err);
+        statusEl.textContent = `Failed to invite: ${err.message}`;
+      }
+    }
+
+    // Add app to favorites
+    async function addToFavorites() {
+      try {
+        await window.sdk.actions.addMiniApp();
+        
+        if (features?.haptics) {
+          await window.sdk.actions.hapticFeedback({ type: 'success' });
+        }
+
+        statusEl.textContent = 'Added to favorites! You can now receive notifications.';
+        
+        // Hide the button after adding
+        document.getElementById('addFavoriteButton').style.display = 'none';
+        
+      } catch (err) {
+        console.error('Failed to add to favorites:', err);
+        
+        if (err.message.includes('production domain')) {
+          statusEl.textContent = 'Add to favorites only works on production domain';
+        } else {
+          statusEl.textContent = `Failed to add: ${err.message}`;
+        }
       }
     }
 
     function handlePlayerMove(e) {
       const idx = e.target.dataset.index;
       if (board[idx] || gameOver) return;
-      makeMove(idx, 'x');
-      if (!gameOver) {
-        statusEl.textContent = 'Bot is thinking...';
-        setTimeout(() => makeMove(bestMove(), 'o'), 400);
+
+      if (gameMode === 'friend') {
+        // In friend mode, alternate between X and O
+        makeMove(idx, currentPlayer);
+        currentPlayer = currentPlayer === 'x' ? 'o' : 'x';
+        if (!gameOver) {
+          statusEl.textContent = `${currentPlayer === 'x' ? 'Player X' : 'Player O'}'s turn`;
+        }
+      } else {
+        // AI mode
+        makeMove(idx, 'x');
+        if (!gameOver) {
+          statusEl.textContent = 'Bot is thinking...';
+          setTimeout(() => {
+            makeMove(bestMove(), 'o');
+            if (!gameOver) {
+              statusEl.textContent = 'Your turn (X)';
+            }
+          }, 400);
+        }
       }
     }
 
@@ -383,10 +478,10 @@
       board[idx] = player;
       cells[idx].textContent = player === 'x' ? 'X' : 'O';
       cells[idx].classList.add(player, 'disabled');
+      
       const winner = checkWinner();
       if (winner) endGame(winner);
       else if (board.every(Boolean)) endGame('draw');
-      else statusEl.textContent = `Your turn (X) ${userAddress ? '- Wallet: ' + userAddress.slice(0, 6) + '...' : ''}`;
     }
 
     function checkWinner(b = board) {
@@ -399,31 +494,47 @@
     async function endGame(result) {
       gameOver = true;
       cells.forEach(c => c.classList.add('disabled'));
+      
       if (result === 'draw') {
         statusEl.textContent = 'It\'s a draw!';
         scores.draw++;
         document.getElementById('drawScore').textContent = scores.draw;
+        
+        if (features?.haptics) {
+          await window.sdk.actions.hapticFeedback({ type: 'light' });
+        }
       } else {
+        const isPlayerWin = (gameMode === 'ai' && result === 'x') || 
+                           (gameMode === 'friend' && result === currentPlayer);
+        
         if (result === 'x') {
-          statusEl.textContent = 'You win!';
+          statusEl.textContent = gameMode === 'ai' ? 'You win!' : 'Player X wins!';
           scores.player++;
           document.getElementById('playerScore').textContent = scores.player;
         } else {
-          statusEl.textContent = 'Bot wins!';
+          statusEl.textContent = gameMode === 'ai' ? 'Bot wins!' : 'Player O wins!';
           scores.bot++;
           document.getElementById('botScore').textContent = scores.bot;
         }
+
+        if (features?.haptics) {
+          await window.sdk.actions.hapticFeedback({ 
+            type: result === 'x' ? 'success' : 'failure' 
+          });
+        }
       }
-      if (features?.haptics) {
-        sdk.actions.hapticFeedback({ type: result === 'draw' ? 'light' : result === 'x' ? 'success' : 'failure' });
-      }
-      const shareUrl = `${window.location.origin}?board=${btoa(JSON.stringify(board))}&result=${result}`;
+
+      // Share result
+      const shareUrl = `${window.location.origin}?result=${result}&mode=${gameMode}`;
+      const resultText = result === 'draw' ? 'Draw!' : 
+                        result === 'x' ? 'Player X won!' : 'Player O won!';
+      
       try {
-        await sdk.actions.post({
-          text: `Tic-Tac-Toe: ${result === 'x' ? 'I won!' : result === 'o' ? 'Bot won!' : 'Draw!'}\nPlay me: ${shareUrl}`,
+        await window.sdk.actions.post({
+          text: `Tic-Tac-Toe ${gameMode === 'ai' ? 'vs AI' : 'with Friend'}: ${resultText}\nPlay me: ${shareUrl}`,
         });
       } catch (err) {
-        console.error('Failed to post result:', err.message);
+        console.error('Failed to post result:', err);
       }
     }
 
@@ -436,6 +547,7 @@
       if (checkWinner(newBoard) === 'x') return { score: -10 };
       if (checkWinner(newBoard) === 'o') return { score: 10 };
       if (availSpots.length === 0) return { score: 0 };
+      
       const moves = [];
       for (let i = 0; i < availSpots.length; i++) {
         const move = {};
@@ -445,6 +557,7 @@
         newBoard[availSpots[i]] = null;
         moves.push(move);
       }
+      
       let bestMove;
       if (player === 'o') {
         let bestScore = -Infinity;
@@ -469,12 +582,15 @@
     function restartGame() {
       board = Array(9).fill(null);
       gameOver = false;
+      currentPlayer = 'x';
+      
       cells.forEach(c => {
         c.textContent = '';
         c.className = 'cell';
       });
+      
       winLine.className = 'win-line';
-      statusEl.textContent = `Your turn (X) ${userAddress ? '- Wallet: ' + userAddress.slice(0, 6) + '...' : ''}`;
+      statusEl.textContent = gameMode === 'ai' ? 'Your turn (X)' : 'Player X\'s turn';
     }
   </script>
 </body>
